@@ -1,0 +1,35 @@
+distances <- read.csv("Output/distances.csv", header=T, row.names=1)
+
+dist_mat <- as.matrix(as.dist(t(distances), upper=T, diag=T))
+dist_mat <- dist_mat[!(row.names(dist_mat) %in% c("Laz","Tar","Sar","Ale","The","Tor","Sky")),]
+dist_mat <- dist_mat[,!(colnames(dist_mat) %in% c("Laz","Tar","Sar","Ale","The","Tor","Sky"))]
+
+A <- -0.5 * dist_mat * dist_mat
+
+ones <- rep(1,ncol(dist_mat))
+identity <- diag(ncol(dist_mat))
+side <- identity - ones %*% t(ones) / ncol(dist_mat)
+
+Delta <- side %*% A %*% side
+
+Evalues <- eigen(Delta)$values
+
+c <- abs(Evalues[length(Evalues)])
+
+c.mat <- matrix(rep(c,ncol(A)*ncol(A)),ncol=ncol(A))
+c.mat <- c.mat - c*diag(ncol(A))
+
+dist.corr <- sqrt(dist_mat * dist_mat + 2*c.mat)
+A <- -0.5 * dist.corr * dist.corr
+Delta <- side %*% A %*% side
+
+Evalues <- eigen(Delta)$values
+Evectors <- eigen(Delta)$vectors
+
+print(Evalues)
+
+Evectors <- Evectors[,-c(30,31)]
+colnames(Evectors) <- paste0("PCo",1:ncol(Evectors))
+rownames(Evectors) <- rownames(dist_mat)
+
+write.csv(Evectors,"Output/PCoSpatial.csv")
