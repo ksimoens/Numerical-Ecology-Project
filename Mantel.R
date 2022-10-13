@@ -1,9 +1,7 @@
 library(ade4)
 library(tidyverse)
 
-Fst.atl <- read.csv("Output/PCo/PCo.sel.atl.csv",header=T,row.names=1)
-
-Fst.dist <- read.csv("Output/distancesFst_tot.csv",header=T, row.names=1)
+Fst.dist <- read.csv("Output/distancesFst_neut.csv",header=T, row.names=1)
 
 inwater.dist <- read.csv("Output/distances.csv",header=T, row.names=1)
 Fst.dist <- Fst.dist[match(rownames(inwater.dist),rownames(Fst.dist)),]
@@ -55,8 +53,8 @@ print(ade4::mantel.rtest(Fst.mantel, inwater.mantel, nrepet=9999))
 p <- ggplot(data=df.plot,aes(x=inwater,y=Fst,col=PAIR)) + geom_point(size=1.5) +
 	theme_bw() + scale_color_viridis_d(option='magma') +
 	xlab("in-water distance (km)") + ylab(expression(F[st])) + 
-	geom_abline(intercept = -6.541e-3, slope = 2.975e-5, color="red", linetype="dashed", size=1) + 
-	geom_label(x=5400,y=0.03,label=expression(paste(R^2 == 0.8943, " (p < 0.0001)")),show.legend=F,size=4)
+	geom_abline(intercept = -5.470e-3, slope = 1.578e-5, color="red", linetype="dashed", size=1) + 
+	geom_label(x=5400,y=0.0125,label=expression(paste(R^2 == 0.8781, " (p < 0.0001)")),show.legend=F,size=4)
 
 p %>% ggsave("Mantel_total.png",.,device='png',width=15,height=10,units='cm')
 
@@ -79,7 +77,46 @@ print(summary(lm(data=df.plot.atl, Fst~inwater)))
 p <- ggplot(data=df.plot.atl,aes(x=inwater,y=Fst,col=PAIR)) + geom_point(size=1.5) +
 	theme_bw() + scale_color_viridis_d(option='magma') + xlim(0,3000) +
 	xlab("in-water distance (km)") + ylab(expression(F[st])) + 
-	geom_abline(intercept = -1.014e-3, slope = 1.796e-5, color="red", linetype="dashed", size=1) +
-	geom_label(x=700,y=0.083,label=expression(paste(R^2 == 0.5518, " (p < 0.0001)")),show.legend=F,size=4)
+	geom_abline(intercept = 3.386e-3, slope = 3.576e-6, color="red", linetype="dashed", size=1) +
+	geom_label(x=2300,y=0.045,label=expression(paste(R^2 == 0.1795, " (p = 0.06)")),show.legend=F,size=4)
 
 p %>% ggsave("Mantel_atl.png",.,device='png',width=15,height=10,units='cm')
+
+df.plot.oos <- df.plot.atl[df.plot.atl$SITE1 != "Oos",]
+df.plot.oos <- df.plot.oos[df.plot.oos$SITE2 != "Oos",]
+rownames(df.plot.oos) <- 1:nrow(df.plot.oos)
+
+df.plot.oos$COUNTRY1 <- ""
+df.plot.oos$COUNTRY2 <- ""
+
+df.plot.oos[df.plot.oos$SITE1 %in% c("Brd","Cro","Eye","Heb","Iom","Ios","Loo","Lyn","Ork","Pad","Pem","She","Sbs","Sul","Cor","Hoo","Kil","Mul","Ven","Jer"),]$COUNTRY1 <- "BRT"
+df.plot.oos[df.plot.oos$SITE2 %in% c("Brd","Cro","Eye","Heb","Iom","Ios","Loo","Lyn","Ork","Pad","Pem","She","Sbs","Sul","Cor","Hoo","Kil","Mul","Ven","Jer"),]$COUNTRY2 <- "BRT"
+df.plot.oos[df.plot.oos$SITE1 %in% c("Idr","Vig"),]$COUNTRY1 <- "BIS"
+df.plot.oos[df.plot.oos$SITE2 %in% c("Idr","Vig"),]$COUNTRY2 <- "BIS"
+df.plot.oos[df.plot.oos$SITE1 %in% c("Hel","Ber","Flo","Sin","Tro","Gul","Kav","Lys"),]$COUNTRY1 <- "SKA"
+df.plot.oos[df.plot.oos$SITE2 %in% c("Hel","Ber","Flo","Sin","Tro","Gul","Kav","Lys"),]$COUNTRY2 <- "SKA"
+
+df.plot.oos$PAIR <- paste(df.plot.oos$COUNTRY1, df.plot.oos$COUNTRY2, sep = "-")
+df.plot.oos[df.plot.oos$PAIR == "BIS-BRT",]$PAIR <- "BRT-BIS"
+df.plot.oos[df.plot.oos$PAIR == "BIS-SKA",]$PAIR <- "SKA-BIS"
+df.plot.oos[df.plot.oos$PAIR == "SKA-BRT",]$PAIR <- "BRT-SKA"
+
+Fst.dist.oos <- Fst.dist.atl[!(rownames(Fst.dist.atl) %in% c("Oos")),
+	!(colnames(Fst.dist.atl) %in% c("Oos"))]
+
+inwater.dist.oos <- inwater.dist.atl[!(rownames(inwater.dist.atl) %in% c("Oos")),
+	!(colnames(inwater.dist.atl) %in% c("Oos"))]
+
+Fst.mantel.oos <- as.dist(Fst.dist.oos)
+inwater.mantel.oos <- as.dist(inwater.dist.oos)
+print(ade4::mantel.rtest(Fst.mantel.oos,inwater.mantel.oos,nrepet=9999))
+
+print(summary(lm(data=df.plot.oos, Fst~inwater)))
+
+p <- ggplot(data=df.plot.oos,aes(x=inwater,y=Fst)) + geom_point(size=1.5) +
+	theme_bw() + 
+	xlab("in-water distance (km)") + ylab(expression(F[st])) +
+	geom_abline(intercept = -1.530e-3, slope = 4.619e-6, color="red", linetype="dashed", size=1) +
+	geom_label(x=500,y=0.03,label=expression(paste(R^2 == 0.4497, " (p < 0.0001)")),show.legend=F,size=4)
+
+p %>% ggsave("Mantel_oos.png",.,device='png',width=15,height=10,units='cm')
