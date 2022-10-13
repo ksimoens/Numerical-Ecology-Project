@@ -7,5 +7,5 @@ distances <- distances[,!(names(distances) %in% c("Laz","Tar","Sar","Ale","The",
 
 distances_dist <- as.dist(t(distances))
 
-dbMEM <- adespatial::dbmem(distances_dist, MEM.autocor="non-null", store.listw=T)
+dbMEM <- adespatial::dbmem(distances_dist, MEM.autocor="positive", store.listw=T, silent=F)
 write.csv(dbMEM,"Output/dbMEM.csv")

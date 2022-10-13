@@ -29,6 +29,10 @@ Evectors <- eigen(Delta)$vectors
 print(Evalues)
 
 Evectors <- Evectors[,-c(30,31)]
+Evalues <- Evalues[-c(30,31)]
+for(i in 1:ncol(Evectors)){
+	Evectors[,i] <- Evectors[,i] * Evalues[i]
+}
 colnames(Evectors) <- paste0("PCo",1:ncol(Evectors))
 rownames(Evectors) <- rownames(dist_mat)
 

@@ -25,6 +25,7 @@ PCoA <- function(Fst){
 	Evectors <- eigen(Delta)$vectors
 	names <- paste0("PCo",1:ncol(Evectors))
 	colnames(Evectors) <- names
+	rownames(Evectors) <- rownames(Fst)
 
   Evalues <- Evalues[which(Evalues > 1e-10)]
   Evectors <- Evectors[,which(Evalues > 1e-10)]
@@ -148,7 +149,7 @@ write.csv(Evectors.neut.tot,"Output/PCo/PCo.neut.tot.csv")
 
 Fst.neut <- as.data.frame(Fst.neut)
 Fst.neut.atl <- Fst.neut[!(row.names(Fst.neut) %in% c("Laz","Tar","Sar","Ale","The","Tor","Sky")),]
-Fst.neut.atl <- as.matrix(Fst.neut.atl %>% select(-Laz,-Tar,-Sar,-Ale,-The,-Tor,-Sky))
+Fst.neut.atl <- as.matrix(Fst.neut.atl %>% dplyr::select(-Laz,-Tar,-Sar,-Ale,-The,-Tor,-Sky))
 
 result.neut.atl <- PCoA(Fst.neut.atl)
 Evalues.neut.atl <- result.neut.atl$values
@@ -175,7 +176,7 @@ write.csv(Evectors.sel.tot,"Output/PCo/PCo.sel.tot.csv")
 
 Fst.sel <- as.data.frame(Fst.sel)
 Fst.sel.atl <- Fst.sel[!(row.names(Fst.sel) %in% c("Laz","Tar","Sar","Ale","The","Tor","Sky")),]
-Fst.sel.atl <- as.matrix(Fst.sel.atl %>% select(-Laz,-Tar,-Sar,-Ale,-The,-Tor,-Sky))
+Fst.sel.atl <- as.matrix(Fst.sel.atl %>% dplyr::select(-Laz,-Tar,-Sar,-Ale,-The,-Tor,-Sky))
 
 result.sel.atl <- PCoA(Fst.sel.atl)
 Evalues.sel.atl <- result.sel.atl$values
