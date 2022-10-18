@@ -43,4 +43,4 @@ print(env)
 # write.table for .txt; write.csv for .csv...
 # col,names = row.names = T: to get the names in the file
 # this will be matrix X in the RDA.
-write.table(env, file='Output/EnvMatrix.txt', quote=F, col.names = T, row.names = T)
+write.csv(env, file='Output/EnvMatrix.csv', quote=F, col.names = T, row.names = T)
