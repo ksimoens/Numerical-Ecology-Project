@@ -86,9 +86,11 @@ PCAOutput <- function(allele.freq,thresh){
 
 	SNP_list <- rownames(PCA.good[PCA.good$PC2 > thresh,])
 	site.scores <- scores(PCA, scaling=1, display="sites")
+	site.scores[,1] <- -site.scores[,1]
 	species.scores <- scores(PCA, scaling=1, display="species")
 	species.scores <- as.data.frame(species.scores[rownames(species.scores) %in% SNP_list,])
 	rownames(species.scores) <- substr(rownames(species.scores),start=2,stop=nchar(rownames(species.scores))-2)
+	species.scores$PC1 <- -species.scores$PC1
 
 	Evalues <- as.vector(PCA_sum$cont$importance[2,])
 
