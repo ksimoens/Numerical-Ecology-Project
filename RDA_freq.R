@@ -2,6 +2,8 @@ library(vegan)
 library(adespatial)
 library(tidyverse)
 library(ggforce)
+library(ggnewscale)
+library(rdacca.hp)
 
 freq <- read.csv("Output/allele_freq_sel.csv",header=T,row.names=1)
 freq.atl <- freq[!(row.names(freq) %in% c("Laz","Tar","Sar","Ale","The","Tor","Sky")),]
@@ -199,10 +201,13 @@ rda.final <- rda(freq.atl, cbind(env.atl.norm.sel,linear,dbMEM.sel))
 rda.sum <- summary(rda.final)
 Evalues <- as.vector(rda.sum$cont$importance[2,])
 site.constraints <- scores(rda.final, scaling=1, display=c("lc"))
+site.constraints[,1] <- -site.constraints[,1]
 species.scores <- 0.4*scores(rda.final, scaling=1, display=c("species"))
 rownames(species.scores) <- substr(rownames(species.scores),start=2,stop=nchar(rownames(species.scores))-2)
+species.scores[,1] <- -species.scores[,1]
 variables <- as.data.frame(0.4*scores(rda.final, scaling=1, display=c("bp")))
 variables$variable <- c("environment","environment","linear","linear","MEM","MEM","MEM")
+variables[,1] <- -variables[,1]
 scale.fac <- 0.4*attributes(species.scores)$const
 species.scores <- as.data.frame(species.scores)
 
@@ -210,12 +215,37 @@ df.plot.s1 <- makePlotDF(site.constraints, rownames(site.constraints))
 plotRDA(df.plot.s1,Evalues,species.scores,variables,scale.fac,"RDA_s1_country.png",3,1)
 
 site.constraints.s2 <- scores(rda.final, scaling=2, display=c("lc"))
+site.constraints.s2[,1] <- -site.constraints.s2[,1]
 species.scores.s2 <- scores(rda.final, scaling=2, display=c("species"))
 rownames(species.scores.s2) <- substr(rownames(species.scores.s2),start=2,stop=nchar(rownames(species.scores.s2))-2)
+species.scores.s2[,1] <- species.scores.s2[,1]
 variables.s2 <- as.data.frame(scores(rda.final, scaling=2, display=c("bp")))
 variables.s2$variable <- c("environment","environment","linear","linear","MEM","MEM","MEM")
+variables.s2[,1] <- -variables.s2[,1]
 scale.fac.s2 <- attributes(species.scores.s2)$const
 species.scores.s2 <- as.data.frame(species.scores.s2)
 
 df.plot.s2 <- makePlotDF(site.constraints.s2, rownames(site.constraints.s2))
 plotRDA(df.plot.s2,Evalues,species.scores.s2,variables.s2,scale.fac.s2,"RDA_s2_country.png",3,0)
+
+site.unconstrained <- as.data.frame(scores(rda.final, scaling=1, choices=c(8,9), display=c("sites")))
+site.unconstrained$country <- countryList(rownames(site.unconstrained))
+Evalues <- as.vector(rda.sum$cont$importance[2,8:9])
+lambda <- sprintf("%.2f",round(Evalues[1:2]*100, 2))
+
+p <- ggplot() + geom_point(data=site.unconstrained,aes(x=PC1,y=PC2,col=country),size=1.5) +
+             theme_bw() + scale_color_viridis_d(option='magma') +
+             xlab(paste0("PC1 (",lambda[1]," %)")) + ylab(paste0("PC2 (",lambda[2]," %)")) +
+             theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank()) +
+             geom_hline(yintercept=0,linetype="dashed") + geom_vline(xintercept=0,linetype="dashed")              
+
+p %>% ggsave("resid_PCA_freq.png",.,device='png',width=15,height=10,units='cm')
+
+rdacca <- rdacca.hp(freq.atl,list(as.data.frame(env.atl.norm.sel), as.data.frame(linear), as.data.frame(dbMEM.sel)), method='RDA')
+rdacca.sep <- rdacca.hp(freq.atl,cbind(env.atl.norm.sel,linear,dbMEM.sel), method='RDA')
+
+permutest <- permu.hp(freq.atl,list(as.data.frame(env.atl.norm.sel), as.data.frame(linear), as.data.frame(dbMEM.sel)), method='RDA', permutations=9999)
+permutest.sep <- permu.hp(freq.atl,cbind(env.atl.norm.sel,linear,dbMEM.sel), method='RDA', permutations=9999)
+
+p <- plot.rdaccahp(rdacca.sep) + theme_bw()
+p %>% ggsave("rdacca_sep_freq.png",.,device='png',width=15,height=7.5,units='cm')
