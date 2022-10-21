@@ -127,6 +127,7 @@ Fst.mat.atl <- Fst.mat[-c(32:38),-c(32:38)]
 result.atl <- PCoA(Fst.mat.atl)
 Evalues.atl <- result.atl$values
 Evectors.atl <- result.atl$vectors
+Evectors.atl[,1] <- -Evectors.atl[,1]
 
 df.plot.atl <- makePlotDF(Evalues.atl,Evectors.atl,rownames(Fst.mat.atl))
 
@@ -140,6 +141,7 @@ Fst.neut <- read.csv("Output/distancesFst_neut.csv",header=T,row.names=1) %>%
 result.neut.tot <- PCoA(Fst.neut)
 Evalues.neut.tot <- result.neut.tot$values
 Evectors.neut.tot <- result.neut.tot$vectors
+Evectors.neut.tot[,2] <- -Evectors.neut.tot[,2]
 
 df.plot.neut.tot <- makePlotDF(Evalues.neut.tot,Evectors.neut.tot,rownames(Fst.neut))
 
@@ -154,6 +156,7 @@ Fst.neut.atl <- as.matrix(Fst.neut.atl %>% dplyr::select(-Laz,-Tar,-Sar,-Ale,-Th
 result.neut.atl <- PCoA(Fst.neut.atl)
 Evalues.neut.atl <- result.neut.atl$values
 Evectors.neut.atl <- result.neut.atl$vectors
+Evectors.neut.atl[,2] <- -Evectors.neut.atl[,2]
 
 df.plot.neut.atl <- makePlotDF(Evalues.neut.atl,Evectors.neut.atl,rownames(Fst.neut.atl))
 
@@ -181,6 +184,7 @@ Fst.sel.atl <- as.matrix(Fst.sel.atl %>% dplyr::select(-Laz,-Tar,-Sar,-Ale,-The,
 result.sel.atl <- PCoA(Fst.sel.atl)
 Evalues.sel.atl <- result.sel.atl$values
 Evectors.sel.atl <- result.sel.atl$vectors
+Evectors.sel.atl[,1:2] <- -Evectors.sel.atl[,1:2]
 
 df.plot.sel.atl <- makePlotDF(Evalues.sel.atl,Evectors.sel.atl,rownames(Fst.sel.atl))
 
