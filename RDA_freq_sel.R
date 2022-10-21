@@ -212,7 +212,7 @@ scale.fac <- 0.4*attributes(species.scores)$const
 species.scores <- as.data.frame(species.scores)
 
 df.plot.s1 <- makePlotDF(site.constraints, rownames(site.constraints))
-plotRDA(df.plot.s1,Evalues,species.scores,variables,scale.fac,"RDA_freq_s1_country.png",3,1)
+plotRDA(df.plot.s1,Evalues,species.scores,variables,scale.fac,"RDA_freq_sel_s1_country.png",3,1)
 
 site.constraints.s2 <- scores(rda.final, scaling=2, display=c("lc"))
 site.constraints.s2[,1] <- -site.constraints.s2[,1]
@@ -226,7 +226,7 @@ scale.fac.s2 <- attributes(species.scores.s2)$const
 species.scores.s2 <- as.data.frame(species.scores.s2)
 
 df.plot.s2 <- makePlotDF(site.constraints.s2, rownames(site.constraints.s2))
-plotRDA(df.plot.s2,Evalues,species.scores.s2,variables.s2,scale.fac.s2,"RDA_freq_s2_country.png",3,0)
+plotRDA(df.plot.s2,Evalues,species.scores.s2,variables.s2,scale.fac.s2,"RDA_freq_sel_s2_country.png",3,0)
 
 site.unconstrained <- as.data.frame(scores(rda.final, scaling=1, choices=c(8,9), display=c("sites")))
 site.unconstrained$country <- countryList(rownames(site.unconstrained))
@@ -239,7 +239,7 @@ p <- ggplot() + geom_point(data=site.unconstrained,aes(x=PC1,y=PC2,col=country),
              theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank()) +
              geom_hline(yintercept=0,linetype="dashed") + geom_vline(xintercept=0,linetype="dashed")              
 
-p %>% ggsave("resid_PCA_freq.png",.,device='png',width=15,height=10,units='cm')
+p %>% ggsave("resid_PCA_freq_sel.png",.,device='png',width=15,height=10,units='cm')
 
 rdacca <- rdacca.hp(freq.atl,list(as.data.frame(env.atl.norm.sel), as.data.frame(linear), as.data.frame(dbMEM.sel)), method='RDA')
 rdacca.sep <- rdacca.hp(freq.atl,cbind(env.atl.norm.sel,linear,dbMEM.sel), method='RDA')
@@ -248,4 +248,4 @@ permutest <- permu.hp(freq.atl,list(as.data.frame(env.atl.norm.sel), as.data.fra
 permutest.sep <- permu.hp(freq.atl,cbind(env.atl.norm.sel,linear,dbMEM.sel), method='RDA', permutations=9999)
 
 p <- plot.rdaccahp(rdacca.sep) + theme_bw()
-p %>% ggsave("rdacca_sep_freq.png",.,device='png',width=15,height=7.5,units='cm')
+p %>% ggsave("rdacca_sep_freq_sel.png",.,device='png',width=15,height=7.5,units='cm')
