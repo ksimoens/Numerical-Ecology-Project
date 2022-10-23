@@ -8,6 +8,21 @@ library(rdacca.hp)
 freq <- read.csv("Output/allele_freq_neut.csv",header=T,row.names=1)
 freq.atl <- freq[!(row.names(freq) %in% c("Laz","Tar","Sar","Ale","The","Tor","Sky")),]
 
+SSspec <- vector()
+SStot <- vector()
+for(i in 1:length(freq.atl[1,])){
+  aver <- mean(freq.atl[,i])
+  SSi <- 0
+  for(j in 1:length(freq.atl[,1])){
+    SSi <- SSi + (freq.atl[j,i]-aver)^2
+  }
+  SSspec <- append(SSspec,SSi/length(freq.atl[,1]))
+  SStot <- append(SStot,SSi)
+}
+
+beta <- sum(SSspec)/(length(SSspec)-1)
+SStotFin <- sum(SStot) 
+
 linear <- read.csv("Output/PCoSpatial.csv",header=T,row.names=1)[,1:2]
 
 dbMEM <- read.csv("Output/dbMEM.csv",header=T,row.names=1)

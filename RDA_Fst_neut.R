@@ -7,6 +7,11 @@ library(rdacca.hp)
 
 Fst.atl <- read.csv("Output/PCo/PCo.neut.atl.csv",header=T,row.names=1)
 
+Fst <- read.csv("Output/distancesFst_neut.csv",header=T,row.names=1)
+Fst <- as.dist(Fst,diag=F,upper=F)
+Fst.mean <- mean(Fst)
+Fst.max <- max(Fst)
+
 linear <- read.csv("Output/PCoSpatial.csv",header=T,row.names=1)[,1:2]
 
 dbMEM <- read.csv("Output/dbMEM.csv",header=T,row.names=1)

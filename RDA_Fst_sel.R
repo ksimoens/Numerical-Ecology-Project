@@ -7,6 +7,11 @@ library(rdacca.hp)
 
 Fst.atl <- read.csv("Output/PCo/PCo.sel.atl.csv",header=T,row.names=1)
 
+Fst <- read.csv("Output/distancesFst_sel.csv",header=T,row.names=1)
+Fst <- as.dist(Fst,diag=F,upper=F)
+Fst.mean <- mean(Fst)
+Fst.max <- max(Fst)
+
 env <- read.table("Output/EnvMatrix.txt",header=T,row.names=1)
 env.atl <- env[!(row.names(env) %in% c("Laz","Tar","Sar","Ale","The","Tor","Sky")),]
 
