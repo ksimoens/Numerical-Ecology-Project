@@ -1,9 +1,6 @@
 library(ggplot2)
 
 data <- read.csv("Input/economy.csv",header=T)
-data$fill <- ""
-data$fill[data$country=="UK",] <- "black"
-data$fill[data$country=="EU",] <- NA
 
 data.lan <- data[data$type=="landings",]
 data.lan.UK <- data.lan[data.lan$country=="UK",]
