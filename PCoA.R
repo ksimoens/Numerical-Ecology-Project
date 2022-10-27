@@ -1,4 +1,5 @@
 library(tidyverse)
+library(ggthemes)
 
 PCoA <- function(Fst){
 	A <- -0.5 * Fst * Fst
@@ -95,12 +96,22 @@ makePlotDF <- function(Evalues,Evectors,names){
   
 }
 
+getColours <- function(pop){
+	col_key <- data.frame(
+			population = c("CHA","DEU","ESP","FRA","GRB","HEL","IRL","ITA","NDL","NOR","SVE","ATL","MED","SKA"),
+			colour = c("#ffb6db","#490092","#004949","#b66dff","#6db6ff","#000000","#920000","#009292","#db6d00","#24ff24","#ffff6d",
+						"#006ddb","#924900","#ff6db6"))
+
+	col_res <- col_key[col_key$population %in% unique(pop),]$colour
+	return(col_res)
+}
+
 plotPCoA <- function(df.plot, Evalues, fileName, option){
-  lambda <- round(Evalues[1:2] / sum(Evalues) *100, 2)
+  lambda <- round(Evalues[1:2] / sum(Evalues) *100, 2)  
 
   p <- df.plot %>%
   ggplot() + geom_point(aes(x=PCo1,y=PCo2,col=df.plot[,option]),size=1.5) +
-             theme_bw() + scale_color_viridis_d(option='magma') +
+             theme_bw() + scale_colour_manual(values=getColours(df.plot[,option])) +
              xlab(paste0("PCo1 (",lambda[1]," %)")) + ylab(paste0("PCo2 (",lambda[2]," %)")) +
              theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank()) +
              geom_hline(yintercept=0,linetype="dashed") + geom_vline(xintercept=0,linetype="dashed") +
