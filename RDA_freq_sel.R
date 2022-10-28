@@ -23,7 +23,7 @@ for(i in 1:length(freq.atl[1,])){
 beta <- sum(SSspec)/(length(SSspec)-1)
 SStotFin <- sum(SStot) 
 
-env <- read.table("Output/EnvMatrix.txt",header=T,row.names=1)
+env <- read.csv("Output/EnvMatrix.csv",header=T,row.names=1)
 env.atl <- env[!(row.names(env) %in% c("Laz","Tar","Sar","Ale","The","Tor","Sky")),]
 
 linear <- read.csv("Output/PCoSpatial.csv",header=T,row.names=1)[,1:2]

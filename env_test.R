@@ -2,7 +2,7 @@ library(vegan)
 library(gridExtra)
 library(tidyverse)
 
-env <- read.table("Output/EnvMatrix.txt", row.names=1, header=T)
+env <- read.csv("Output/EnvMatrix.csv", row.names=1, header=T)
 env.atl <- env[!(row.names(env) %in% c("Laz","Tar","Sar","Ale","The","Tor","Sky")),]
 
 env.atl.norm <- as.data.frame(scale(env.atl, scale=T, center=T))

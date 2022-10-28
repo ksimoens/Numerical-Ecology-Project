@@ -12,7 +12,7 @@ Fst <- as.dist(Fst,diag=F,upper=F)
 Fst.mean <- mean(Fst)
 Fst.max <- max(Fst)
 
-env <- read.table("Output/EnvMatrix.txt",header=T,row.names=1)
+env <- read.csv("Output/EnvMatrix.csv",header=T,row.names=1)
 env.atl <- env[!(row.names(env) %in% c("Laz","Tar","Sar","Ale","The","Tor","Sky")),]
 
 linear <- read.csv("Output/PCoSpatial.csv",header=T,row.names=1)[,1:2]

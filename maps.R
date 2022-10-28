@@ -86,7 +86,7 @@ mapMEM7 <- ggdraw() +
 
 ggsave("mapMEM7.png",mapMEM7,device="png",width=15,height=15,units='cm')
 
-env <- read.table("Output/EnvMatrix.txt",header=T,row.names=1)
+env <- read.csv("Output/EnvMatrix.csv",header=T,row.names=1)
 env <- env[!(row.names(coord) %in% c("Laz","Tar","Sar","Ale","The","Tor","Sky")),]
 env <- env[match(rownames(coord),rownames(env)),]
 
