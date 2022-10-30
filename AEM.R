@@ -7,6 +7,19 @@ con_mat <- read.csv("Input/AssymDist.csv", header=T, row.names=1)
 
 con_mat <- as.matrix(con_mat)
 
+melted_con <- melt(t(con_mat))
+colnames(melted_con) <- c("SITE1","SITE2","Dispersal")
+
+p <- ggplot(data = melted_con, aes(SITE1, SITE2, fill = factor(Dispersal)))+
+  geom_tile(color = "black")+
+  scale_fill_manual(values=c("white","#f8dcdc","#f89696","red"), 
+                       name="Dispersal probabilities") +
+  ylab("Sampling location A")+
+  xlab("Sampling location B")+
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, size = 8, hjust = 1))+ 
+  theme(legend.position="top",legend.text = element_text(color = "black", size = 6)) +
+  coord_fixed()
+
 upper <- con_mat[upper.tri(con_mat, diag = TRUE)]
 lower <- con_mat[lower.tri(con_mat, diag = TRUE)]
 
