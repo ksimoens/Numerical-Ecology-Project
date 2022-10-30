@@ -1,5 +1,4 @@
 library(tidyverse)
-library(ggthemes)
 
 PCoA <- function(Fst){
 	A <- -0.5 * Fst * Fst
@@ -99,23 +98,31 @@ makePlotDF <- function(Evalues,Evectors,names){
 getColours <- function(pop){
 	col_key <- data.frame(
 			population = c("CHA","DEU","ESP","FRA","GRB","HEL","IRL","ITA","NDL","NOR","SVE","ATL","MED","SKA"),
-			colour = c("#ffb6db","#490092","#004949","#b66dff","#6db6ff","#000000","#920000","#009292","#db6d00","#24ff24","#ffff6d",
-						"#006ddb","#924900","#ff6db6"))
+			colour = c(rep(c("#C7E020FF","#24868EFF","#440154FF"),3),c("#C7E020FF","#440154FF"),c("#C7E020FF","#24868EFF","#440154FF")),
+			shape = c(rep(15,3),rep(17,3),rep(19,3),18,18,15,17,19))
 
 	col_res <- col_key[col_key$population %in% unique(pop),]$colour
-	return(col_res)
+	sha_res <- col_key[col_key$population %in% unique(pop),]$shape
+	return(list(colour = col_res,shape = sha_res))
 }
 
 plotPCoA <- function(df.plot, Evalues, fileName, option){
   lambda <- round(Evalues[1:2] / sum(Evalues) *100, 2)  
 
   p <- df.plot %>%
-  ggplot() + geom_point(aes(x=PCo1,y=PCo2,col=df.plot[,option]),size=1.5) +
-             theme_bw() + scale_colour_manual(values=getColours(df.plot[,option])) +
+  ggplot() + geom_point(aes(x=PCo1,y=PCo2,col=df.plot[,option],shape=df.plot[,option]),size=1.5) +
+             theme_bw() + 
+             scale_colour_manual(
+             	name = names(df.plot)[option],
+             	labels = sort(unique(df.plot[,option])),
+             	values=getColours(df.plot[,option])$colour) +
+             scale_shape_manual(
+             	name = names(df.plot)[option],
+             	labels =sort(unique(df.plot[,option])),
+             	values=getColours(df.plot[,option])$shape) +
              xlab(paste0("PCo1 (",lambda[1]," %)")) + ylab(paste0("PCo2 (",lambda[2]," %)")) +
              theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank()) +
-             geom_hline(yintercept=0,linetype="dashed") + geom_vline(xintercept=0,linetype="dashed") +
-             guides(col=guide_legend(title=colnames(df.plot)[option]))
+             geom_hline(yintercept=0,linetype="dashed") + geom_vline(xintercept=0,linetype="dashed")
 
   p %>% ggsave(fileName,.,device='png',width=15,height=10,units='cm')
 }

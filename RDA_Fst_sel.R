@@ -120,6 +120,17 @@ for(i in 1:nrow(rda.part.df)){
 df.parts <- data.frame(fraction=fractions, RsquareAdj=R2adj, dof=degrees, F=Fvalues, "p-value"=pvalues)
 print(df.parts)
 
+getColours <- function(pop){
+	col_key <- data.frame(
+			population = c("CHA","DEU","ESP","FRA","GRB","HEL","IRL","ITA","NDL","NOR","SVE","ATL","MED","SKA"),
+			colour = c(rep(c("#C7E020FF","#24868EFF","#440154FF"),3),c("#C7E020FF","#440154FF"),c("#C7E020FF","#24868EFF","#440154FF")),
+			shape = c(rep(15,3),rep(17,3),rep(19,3),18,18,15,17,19))
+
+	col_res <- col_key[col_key$population %in% unique(pop),]$colour
+	sha_res <- col_key[col_key$population %in% unique(pop),]$shape
+	return(list(colour = col_res,shape = sha_res))
+}
+
 plotRDA <- function(df.plot, Evalues, VAR, scale, fileName, option, scaling){
   lambda <- sprintf("%.2f",round(Evalues[1:2] / sum(Evalues) *100, 2))
   rad <- scale*sqrt(2/length(Evalues))
@@ -129,8 +140,16 @@ plotRDA <- function(df.plot, Evalues, VAR, scale, fileName, option, scaling){
              new_scale_colour() +
              geom_circle(aes(x0=0,y0=0,r=rad),linetype=scaling) +  			 
   			 geom_text(data=VAR,aes(x=1.12*RDA1,y=1.07*RDA2,label=rownames(VAR)),size=3) +
-  			 geom_point(data=df.plot,aes(x=RDA1,y=RDA2,col=df.plot[,option]),size=1.5) +
-             theme_bw() + scale_color_viridis_d(option='magma') +
+  			 geom_point(data=df.plot,aes(x=RDA1,y=RDA2,col=col=df.plot[,option],shape=df.plot[,option]),size=1.5) +
+             theme_bw() + 
+			 scale_colour_manual(
+             	name = names(df.plot)[option],
+             	labels = sort(unique(df.plot[,option])),
+             	values=getColours(df.plot[,option])$colour) +
+             scale_shape_manual(
+             	name = names(df.plot)[option],
+             	labels =sort(unique(df.plot[,option])),
+             	values=getColours(df.plot[,option])$shape) +
              xlab(paste0("RDA1 (",lambda[1]," %)")) + ylab(paste0("RDA2 (",lambda[2]," %)")) +
              theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank()) +
              geom_hline(yintercept=0,linetype="dashed") + geom_vline(xintercept=0,linetype="dashed") +

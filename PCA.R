@@ -47,6 +47,17 @@ regionList <- function(populations){
   return(populations)
 }
 
+getColours <- function(pop){
+	col_key <- data.frame(
+			population = c("CHA","DEU","ESP","FRA","GRB","HEL","IRL","ITA","NDL","NOR","SVE","ATL","MED","SKA"),
+			colour = c(rep(c("#C7E020FF","#24868EFF","#440154FF"),3),c("#C7E020FF","#440154FF"),c("#C7E020FF","#24868EFF","#440154FF")),
+			shape = c(rep(15,3),rep(17,3),rep(19,3),18,18,15,17,19))
+
+	col_res <- col_key[col_key$population %in% unique(pop),]$colour
+	sha_res <- col_key[col_key$population %in% unique(pop),]$shape
+	return(list(colour = col_res,shape = sha_res))
+}
+
 makePlotDF <- function(Evectors,names){
   df.plot <- Evectors[,1:2] %>% as.data.frame()
   rownames(df.plot) <- names
@@ -66,8 +77,16 @@ plotPCA <- function(df.plot, Evalues, U, scale, fileName, option){
              	lineend='round', arrow = arrow(length = unit(0.1, "inches"))) + 
   			 geom_circle(aes(x0=0,y0=0,r=rad)) +
   			 geom_text(data=U,aes(x=1.12*PC1,y=1.07*PC2,label=rownames(U)),size=3) +
-  			 geom_point(data=df.plot,aes(x=PC1,y=PC2,col=df.plot[,option]),size=1.5) +
-             theme_bw() + scale_color_viridis_d(option='magma') +
+  			 geom_point(data=df.plot,aes(x=PC1,y=PC2,col=df.plot[,option],shape=df.plot[,option]),size=1.5) +
+             theme_bw() + 
+			 scale_colour_manual(
+             	name = names(df.plot)[option],
+             	labels = sort(unique(df.plot[,option])),
+             	values=getColours(df.plot[,option])$colour) +
+             scale_shape_manual(
+             	name = names(df.plot)[option],
+             	labels =sort(unique(df.plot[,option])),
+             	values=getColours(df.plot[,option])$shape) +
              xlab(paste0("PC1 (",lambda[1]," %)")) + ylab(paste0("PC2 (",lambda[2]," %)")) +
              theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank()) +
              geom_hline(yintercept=0,linetype="dashed") + geom_vline(xintercept=0,linetype="dashed") +
