@@ -237,11 +237,19 @@ site.unconstrained$country <- countryList(rownames(site.unconstrained))
 Evalues <- as.vector(rda.sum$cont$importance[2,10:11])
 lambda <- sprintf("%.2f",round(Evalues[1:2]*100, 2))
 
-p <- ggplot() + geom_point(data=site.unconstrained,aes(x=PC1,y=PC2,col=country),size=1.5) +
-             theme_bw() + scale_color_viridis_d(option='magma') +
+p <- ggplot() + geom_point(data=site.unconstrained,aes(x=PC1,y=PC2,col=country,shape=country),size=1.5) +
+             theme_bw() + 
+             scale_colour_manual(
+              name = "country",
+              labels = sort(unique(site.unconstrained$country)),
+              values=getColours(site.unconstrained$country)$colour) +
+             scale_shape_manual(
+              name = "country",
+              labels =sort(unique(site.unconstrained$country)),
+              values=getColours(site.unconstrained$country)$shape) +
              xlab(paste0("PC1 (",lambda[1]," %)")) + ylab(paste0("PC2 (",lambda[2]," %)")) +
              theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank()) +
-             geom_hline(yintercept=0,linetype="dashed") + geom_vline(xintercept=0,linetype="dashed")              
+             geom_hline(yintercept=0,linetype="dashed") + geom_vline(xintercept=0,linetype="dashed")            
 
 p %>% ggsave("resid_PCA_Fst_neut.png",.,device='png',width=15,height=10,units='cm')
 
@@ -250,8 +258,8 @@ names(df.dbMEM) <- "MEM4"
 rdacca <- rdacca.hp(Fst.atl,list(as.data.frame(linear), df.dbMEM, as.data.frame(AEM.sel)), method='RDA')
 rdacca.sep <- rdacca.hp(Fst.atl,cbind(linear,df.dbMEM,AEM.sel), method='RDA')
 
-permutest <- permu.hp(Fst.atl,list(as.data.frame(env.atl.norm.sel), as.data.frame(linear), as.data.frame(dbMEM.sel)), method='RDA', permutations=9999)
-permutest.sep <- permu.hp(Fst.atl,cbind(env.atl.norm.sel,linear,dbMEM.sel), method='RDA', permutations=9999)
+permutest <- permu.hp(Fst.atl,list(as.data.frame(linear), df.dbMEM, as.data.frame(AEM.sel)), method='RDA', permutations=9999)
+permutest.sep <- permu.hp(Fst.atl,cbind(linear,df.dbMEM,AEM.sel), method='RDA', permutations=9999)
 
 p <- plot.rdaccahp(rdacca.sep) + theme_bw()
 p %>% ggsave("rdacca_sep_Fst_neut.png",.,device='png',width=15,height=7.5,units='cm')

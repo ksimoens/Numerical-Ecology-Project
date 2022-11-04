@@ -251,8 +251,16 @@ site.unconstrained$country <- countryList(rownames(site.unconstrained))
 Evalues <- as.vector(rda.sum$cont$importance[2,9:10])
 lambda <- sprintf("%.2f",round(Evalues[1:2]*100, 2))
 
-p <- ggplot() + geom_point(data=site.unconstrained,aes(x=PC1,y=PC2,col=country),size=1.5) +
-             theme_bw() + scale_color_viridis_d(option='magma') +
+p <- ggplot() + geom_point(data=site.unconstrained,aes(x=PC1,y=PC2,col=country,shape=country),size=1.5) +
+             theme_bw() + 
+             scale_colour_manual(
+              name = "country",
+              labels = sort(unique(site.unconstrained$country)),
+              values=getColours(site.unconstrained$country)$colour) +
+             scale_shape_manual(
+              name = "country",
+              labels =sort(unique(site.unconstrained$country)),
+              values=getColours(site.unconstrained$country)$shape) +
              xlab(paste0("PC1 (",lambda[1]," %)")) + ylab(paste0("PC2 (",lambda[2]," %)")) +
              theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank()) +
              geom_hline(yintercept=0,linetype="dashed") + geom_vline(xintercept=0,linetype="dashed")              

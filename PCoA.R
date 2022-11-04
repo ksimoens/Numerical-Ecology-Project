@@ -188,6 +188,7 @@ Fst.sel <- read.csv("Output/distancesFst_sel.csv",header=T,row.names=1) %>%
 result.sel.tot <- PCoA(Fst.sel)
 Evalues.sel.tot <- result.sel.tot$values
 Evectors.sel.tot <- result.sel.tot$vectors
+Evectors.sel.tot[,2] <- -Evectors.sel.tot[,2]
 
 df.plot.sel.tot <- makePlotDF(Evalues.sel.tot,Evectors.sel.tot,rownames(Fst.sel))
 

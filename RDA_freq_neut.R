@@ -23,6 +23,9 @@ for(i in 1:length(freq.atl[1,])){
 beta <- sum(SSspec)/(length(SSspec)-1)
 SStotFin <- sum(SStot) 
 
+env <- read.csv("Output/EnvMatrix.csv",header=T,row.names=1)
+env.atl <- env[!(row.names(env) %in% c("Laz","Tar","Sar","Ale","The","Tor","Sky")),]
+
 linear <- read.csv("Output/PCoSpatial.csv",header=T,row.names=1)[,1:2]
 
 dbMEM <- read.csv("Output/dbMEM.csv",header=T,row.names=1)
@@ -32,6 +35,19 @@ AEM <- read.csv("Output/AEM.csv",header=T,row.names=1)
 freq.atl <- freq.atl[match(rownames(AEM),rownames(freq.atl)),]
 linear <- linear[match(rownames(AEM),rownames(linear)),]
 dbMEM <- dbMEM[match(rownames(AEM),rownames(dbMEM)),]
+env.atl <- env.atl[match(rownames(AEM),rownames(env.atl)),]
+
+env.atl <- env.atl[,-c(6,7)]
+
+env.atl.norm <- scale(env.atl, center=T, scale=T)
+
+rda.env <- rda(freq.atl, env.atl.norm)
+R2adj.env <- RsquareAdj(rda.env)
+print(anova(rda.env,permutations = how(nperm=9999)))
+sel.env <- forward.sel(freq.atl, env.atl.norm, adjR2thresh=R2adj.env, alpha=0.05, nperm=9999)
+print(sel.env)
+
+env.atl.norm.sel <- env.atl.norm[,sel.env$order]
 
 rda.linear <- rda(freq.atl,linear)
 R2adj.linear <- RsquareAdj(rda.linear)
