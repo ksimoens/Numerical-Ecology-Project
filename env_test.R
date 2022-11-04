@@ -51,9 +51,9 @@ p_PP_r <- ggplot(env.atl.norm,aes(x=PP_range)) + geom_histogram(col='black',fill
 p_BAT <- ggplot(env.atl.norm,aes(x=bathy)) + geom_histogram(col='black',fill='grey') + theme_bw() +
 	theme(panel.grid.minor = element_blank()) + xlab("bathymetry") 
 
-g <- arrangeGrob(p_SST_m, p_SST_r, p_SAL_m, p_SAL_r, p_VEL_m, p_PP_m, p_PP_r, p_BAT,ncol=4)
+g <- arrangeGrob(p_SST_m, p_SST_r, p_SAL_m, p_SAL_r, p_VEL_m, p_PP_m, p_PP_r, p_BAT,nrow=4,ncol=2)
 
-g %>% ggsave("normality.png",.,device='png',width=40,height=20,units='cm')
+g %>% ggsave("normality.png",.,device='png',width=20,height=40,units='cm')
 
 
 
