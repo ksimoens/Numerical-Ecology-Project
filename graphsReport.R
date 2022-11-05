@@ -4,111 +4,7 @@ library(ggforce)
 library(ggpubr)
 library(ggnewscale)
 
-PCoA <- function(Fst){
-	A <- -0.5 * Fst * Fst
-
-	identity <- diag(ncol(A))
-	ones <- rep(1,ncol(A))
-	side <- identity - ones %*% t(ones) / ncol(A)
-
-	Delta <- side %*% A %*% side
-
-	Evalues <- eigen(Delta)$values
-	print(Evalues)
-
-	c <- abs(Evalues[length(Evalues)])
-	print(c)
-	c.mat <- matrix(rep(c,ncol(A)*ncol(A)),ncol=ncol(A))
-	c.mat <- c.mat - c*diag(ncol(A))
-
-	Fst.corr <- sqrt(Fst * Fst + 2*c.mat)
-	A <- -0.5 * Fst.corr * Fst.corr
-	Delta <- side %*% A %*% side
-
-	Evalues <- eigen(Delta)$values
-	Evectors <- eigen(Delta)$vectors
-	names <- paste0("PCo",1:ncol(Evectors))
-	colnames(Evectors) <- names
-	rownames(Evectors) <- rownames(Fst)
-
-  Evalues <- Evalues[which(Evalues > 1e-10)]
-  Evectors <- Evectors[,which(Evalues > 1e-10)]
-
-  for(i in 1:ncol(Evectors)){
-    Evectors[,i] <- Evectors[,i]*Evalues[i]
-  }
-
-	return(list(values=Evalues,vectors=Evectors))
-}
-
-countryList <- function(populations){
-  reference <- data.frame(
-                  pop = c("Brd","Cro","Eye","Heb","Iom","Ios","Loo","Lyn","Ork","Pad","Pem","She","Sbs","Sul",
-                          "Jer",
-                          "Idr",
-                          "Hel",
-                          "Ale","Sky","The","Tor",
-                          "Cor","Hoo","Kil","Mul","Ven",
-                          "Laz","Tar","Sar",
-                          "Oos",
-                          "Ber","Flo","Sin","Tro",
-                          "Vig",
-                          "Gul","Kav","Lys"),
-                  country = c(rep("GRB",14),"CHA","FRA","DEU",rep("HEL",4),rep("IRL",5),rep("ITA",3),"NDL",rep("NOR",4),"ESP",rep("SVE",3))
-                )
-  for(i in 1:nrow(reference)){
-    populations[populations == reference$pop[i]] <- reference$country[i]
-  }
-
-  return(populations)
-}
-
-regionList <- function(populations){
-  reference <- data.frame(
-                  pop = c("Brd","Cro","Eye","Heb","Iom","Ios","Loo","Lyn","Ork","Pad","Pem","She","Sbs","Sul",
-                          "Jer",
-                          "Idr",
-                          "Hel",
-                          "Ale","Sky","The","Tor",
-                          "Cor","Hoo","Kil","Mul","Ven",
-                          "Laz","Tar","Sar",
-                          "Oos",
-                          "Ber","Tro",
-                          "Flo","Sin",
-                          "Vig",
-                          "Gul","Kav","Lys"),
-                  region = c(rep("ATL",17),rep("MED",4),rep("ATL",5),rep("MED",3),rep("ATL",3),rep("SKA",2),"ATL",rep("SKA",3))
-                )
-  for(i in 1:nrow(reference)){
-    populations[populations == reference$pop[i]] <- reference$region[i]
-  }
-
-  return(populations)
-}
-
-makePlotDF <- function(Evectors,names){
-  df.plot <- Evectors[,1:2] %>% as.data.frame()
-  rownames(df.plot) <- names
-  df.plot$country <- rownames(df.plot)
-  df.plot$country <- countryList(df.plot$country)
-  df.plot$region <- rownames(df.plot)
-  df.plot$region <- regionList(df.plot$region)
-
-  print(df.plot)
-  return(df.plot)
-  
-}
-
-getColours <- function(pop){
-	col_key <- data.frame(
-			population = c("CHA","DEU","ESP","FRA","GRB","HEL","IRL","ITA","NDL","NOR","SVE","ATL","MED","SKA"),
-			colour = c(rep(c("#C7E020FF","#24868EFF","#440154FF"),3),c("#C7E020FF","#440154FF"),c("#C7E020FF","#24868EFF","#440154FF")),
-			shape = c(rep(15,3),rep(17,3),rep(19,3),18,18,15,17,19))
-
-	col_res <- col_key[col_key$population %in% unique(pop),]$colour
-	sha_res <- col_key[col_key$population %in% unique(pop),]$shape
-	return(list(colour = col_res,shape = sha_res))
-}
+source('functions.R')
 
 plotPCoA <- function(df.plot, Evalues, option){
   lambda <- round(Evalues[1:2] / sum(Evalues) *100, 2)  
@@ -399,6 +295,8 @@ variables$variable <- c("environment","environment","environment","linear","line
 df.text <- data.frame(x=c(0.15, 0.29, 0.16, -0.35, -0.22, -0.32, -0.30, -0.15),
                       y=c(0.015, 0.005, -0.022, -0.01, -0.012, -0.002, 0.01, 0.022),
                       names=c("MEM5", "SST range", "PCo2", "PCo1", "SST mean", "MEM1", "SAL mean", "MEM3"))
+
+#adjust xlim in plotRDA before plotting
 
 df.plot.s1 <- makePlotDF(site.constraints, rownames(site.constraints))
 p_s1 <- plotRDA(df.plot.s1,Evalues,variables,scale.fac,df.text,3,1)

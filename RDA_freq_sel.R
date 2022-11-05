@@ -5,6 +5,8 @@ library(ggforce)
 library(ggnewscale)
 library(rdacca.hp)
 
+source('functions.R')
+
 freq <- read.csv("Output/allele_freq_sel.csv",header=T,row.names=1)
 freq.atl <- freq[!(row.names(freq) %in% c("Laz","Tar","Sar","Ale","The","Tor","Sky")),]
 
@@ -25,6 +27,7 @@ SStotFin <- sum(SStot)
 
 env <- read.csv("Output/EnvMatrix.csv",header=T,row.names=1)
 env.atl <- env[!(row.names(env) %in% c("Laz","Tar","Sar","Ale","The","Tor","Sky")),]
+env.atl <- env.atl[,-c(6,7)]
 
 linear <- read.csv("Output/PCoSpatial.csv",header=T,row.names=1)[,1:2]
 
@@ -80,41 +83,6 @@ rownames(rda.part.df) <- c("[env]","[lin]","[MEM]","[env] + [lin]","[env] + [MEM
 
 key <- list("[env]"=env.atl.norm.sel, "[lin]"=linear, "[MEM]"=dbMEM.sel)
 
-makeRDA <- function(rowname){
-	str_res <- strsplit(rowname, " +")[[1]]
-	print(str_res)
-	str_res <- str_res[str_res!="+"]
-	n <- length(str_res)
-	index <- which(str_res=="|")
-	if(length(index) == 0){
-		index <- n+1
-	} else {
-		index <- index[1]
-	}
-	variable <- as.data.frame(key[names(key)==str_res[1]])
-	if(index > 2){
-		for(i in 2:(index-1)){
-			var <- str_res[i]
-			variable <- cbind(variable,key[names(key)==var])
-		}
-	}
-	print(names(variable))
-	if(index != n+1){
-		conditional <- as.data.frame(key[names(key)==str_res[index+1]])
-		if(index + 1 < n){
-			for(i in (index+2):(n)){
-				var <- str_res[i]
-				conditional <- cbind(conditional,key[names(key)==var])
-			}
-		}
-		rda.out <- rda(freq.atl, variable, conditional)
-		print(names(conditional))
-	} else {
-		rda.out <- rda(freq.atl, variable)
-	}
-	return(rda.out)
-}
-
 for(i in 1:nrow(rda.part.df)){
 	fractions <- c(fractions, rownames(rda.part.df)[i])
 	R2adj <- c(R2adj, rda.part.df$Adj.R.square[i])
@@ -131,17 +99,6 @@ for(i in 1:nrow(rda.part.df)){
 df.parts <- data.frame(fraction=fractions, RsquareAdj=R2adj, dof=degrees, F=Fvalues, "p-value"=pvalues)
 print(df.parts)
 
-getColours <- function(pop){
-	col_key <- data.frame(
-			population = c("CHA","DEU","ESP","FRA","GRB","HEL","IRL","ITA","NDL","NOR","SVE","ATL","MED","SKA"),
-			colour = c(rep(c("#C7E020FF","#24868EFF","#440154FF"),3),c("#C7E020FF","#440154FF"),c("#C7E020FF","#24868EFF","#440154FF")),
-			shape = c(rep(15,3),rep(17,3),rep(19,3),18,18,15,17,19))
-
-	col_res <- col_key[col_key$population %in% unique(pop),]$colour
-	sha_res <- col_key[col_key$population %in% unique(pop),]$shape
-	return(list(colour = col_res,shape = sha_res))
-}
-
 plotRDA <- function(df.plot, Evalues, U, VAR, scale, fileName, option, scaling){
   lambda <- sprintf("%.2f",round(Evalues[1:2] / sum(Evalues) *100, 2))
   rad <- scale*sqrt(2/length(Evalues))
@@ -154,7 +111,7 @@ plotRDA <- function(df.plot, Evalues, U, VAR, scale, fileName, option, scaling){
              new_scale_colour() +
              geom_circle(aes(x0=0,y0=0,r=rad),linetype=scaling) +  			 
   			 geom_text(data=U,aes(x=1.12*RDA1,y=1.07*RDA2,label=rownames(U)),size=3) +
-  			 geom_point(data=df.plot,aes(x=RDA1,y=RDA2,col=col=df.plot[,option],shape=df.plot[,option]),size=1.5) +
+  			 geom_point(data=df.plot,aes(x=RDA1,y=RDA2,col=df.plot[,option],shape=df.plot[,option]),size=1.5) +
              theme_bw() + 
 			 scale_colour_manual(
              	name = names(df.plot)[option],
@@ -172,63 +129,6 @@ plotRDA <- function(df.plot, Evalues, U, VAR, scale, fileName, option, scaling){
              ylim(1.15*min(df.plot$RDA2,U$RDA2,-rad,VAR$RDA2),1.15*max(df.plot$RDA2,U$RDA2,rad,VAR$RDA2)) 
 
   p %>% ggsave(fileName,.,device='png',width=15,height=10,units='cm')
-}
-
-countryList <- function(populations){
-  reference <- data.frame(
-                  pop = c("Brd","Cro","Eye","Heb","Iom","Ios","Loo","Lyn","Ork","Pad","Pem","She","Sbs","Sul",
-                          "Jer",
-                          "Idr",
-                          "Hel",
-                          "Ale","Sky","The","Tor",
-                          "Cor","Hoo","Kil","Mul","Ven",
-                          "Laz","Tar","Sar",
-                          "Oos",
-                          "Ber","Flo","Sin","Tro",
-                          "Vig",
-                          "Gul","Kav","Lys"),
-                  country = c(rep("GRB",14),"CHA","FRA","DEU",rep("HEL",4),rep("IRL",5),rep("ITA",3),"NDL",rep("NOR",4),"ESP",rep("SVE",3))
-                )
-  for(i in 1:nrow(reference)){
-    populations[populations == reference$pop[i]] <- reference$country[i]
-  }
-
-  return(populations)
-}
-
-regionList <- function(populations){
-  reference <- data.frame(
-                  pop = c("Brd","Cro","Eye","Heb","Iom","Ios","Loo","Lyn","Ork","Pad","Pem","She","Sbs","Sul",
-                          "Jer",
-                          "Idr",
-                          "Hel",
-                          "Ale","Sky","The","Tor",
-                          "Cor","Hoo","Kil","Mul","Ven",
-                          "Laz","Tar","Sar",
-                          "Oos",
-                          "Ber","Tro",
-                          "Flo","Sin",
-                          "Vig",
-                          "Gul","Kav","Lys"),
-                  region = c(rep("ATL",17),rep("MED",4),rep("ATL",5),rep("MED",3),rep("ATL",3),rep("SKA",2),"ATL",rep("SKA",3))
-                )
-  for(i in 1:nrow(reference)){
-    populations[populations == reference$pop[i]] <- reference$region[i]
-  }
-
-  return(populations)
-}
-
-makePlotDF <- function(Evectors,names){
-  df.plot <- Evectors[,1:2] %>% as.data.frame()
-  rownames(df.plot) <- names
-  df.plot$country <- rownames(df.plot)
-  df.plot$country <- countryList(df.plot$country)
-  df.plot$region <- rownames(df.plot)
-  df.plot$region <- regionList(df.plot$region)
-
-  print(df.plot)
-  return(df.plot)
 }
 
 rda.final <- rda(freq.atl, cbind(env.atl.norm.sel,linear,dbMEM.sel))

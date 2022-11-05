@@ -8,6 +8,8 @@ library(gdistance)
 library(geosphere)
 library(maptools)
 
+source('functions.R')
+
 world <- ne_countries(scale = "large", returnclass = "sf")
 
 sf_use_s2(FALSE)
@@ -210,28 +212,6 @@ mapAEM27 <- ggdraw() +
 
 coord <- read.csv("Input/coordinates.csv",header=T,row.names=1)
 
-countryList <- function(populations){
-  reference <- data.frame(
-                  pop = c("Brd","Cro","Eye","Heb","Iom","Ios","Loo","Lyn","Ork","Pad","Pem","She","Sbs","Sul",
-                          "Jer",
-                          "Idr",
-                          "Hel",
-                          "Ale","Sky","The","Tor",
-                          "Cor","Hoo","Kil","Mul","Ven",
-                          "Laz","Tar","Sar",
-                          "Oos",
-                          "Ber","Flo","Sin","Tro",
-                          "Vig",
-                          "Gul","Kav","Lys"),
-                  country = c(rep("GRB",14),"CHA","FRA","DEU",rep("HEL",4),rep("IRL",5),rep("ITA",3),"NDL",rep("NOR",4),"ESP",rep("SVE",3))
-                )
-  for(i in 1:nrow(reference)){
-    populations[populations == reference$pop[i]] <- reference$country[i]
-  }
-
-  return(populations)
-}
-
 coord$country <- countryList(rownames(coord))
 
 data(wrld_simpl)
@@ -260,17 +240,6 @@ Tro <- as.numeric(coord[rownames(coord)=="Tro",1:2])
 Sky <- as.numeric(coord[rownames(coord)=="Sky",1:2])
 TrotoSky <- shortestPath(trans, Tro, Sky, output="SpatialLines")
 TrotoSky <- SpatialLinesDataFrame(TrotoSky, data = data.frame(ID = 1))
-
-getColours <- function(pop){
-  col_key <- data.frame(
-      population = c("CHA","DEU","ESP","FRA","GRB","HEL","IRL","ITA","NDL","NOR","SVE","ATL","MED","SKA"),
-      colour = c(rep(c("#C7E020FF","#24868EFF","#440154FF"),3),c("#C7E020FF","#440154FF"),c("#C7E020FF","#24868EFF","#440154FF")),
-      shape = c(rep(15,3),rep(17,3),rep(19,3),18,18,15,17,19))
-
-  col_res <- col_key[col_key$population %in% unique(pop),]$colour
-  sha_res <- col_key[col_key$population %in% unique(pop),]$shape
-  return(list(colour = col_res,shape = sha_res))
-}
 
 lines <- ggplot() +
 	geom_sf(data=world) +

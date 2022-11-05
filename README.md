@@ -25,6 +25,9 @@ Statistical analysis of the environmental variables
 ## extractEnv.R
 Extract values for environmental variables from raster layers for each coordinate
 
+## functions.R
+Collection of functions used multiple times in the other scripts
+
 ## graphsReport.R
 Make some nicer graphs for the final report
 

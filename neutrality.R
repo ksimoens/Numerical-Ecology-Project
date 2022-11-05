@@ -4,55 +4,7 @@ library(hierfstat)
 library(tidyverse)
 library(adespatial)
 
-calcFst <- function(gendata){
-	diffstats <- pairwise.WCfst(gendata)
-
-	print(diffstats)
-
-	rownames(diffstats) <- substr(rownames(diffstats),1,3)
-	colnames(diffstats) <- substr(colnames(diffstats),1,3)
-	diffstats[diffstats < 0] <- 0
-	diffstats[is.na(diffstats)] <- 0
-
-	return(diffstats)
-}
-
-PCoA <- function(Fst){
-	A <- -0.5 * Fst * Fst
-
-	identity <- diag(ncol(A))
-	ones <- rep(1,ncol(A))
-	side <- identity - ones %*% t(ones) / ncol(A)
-
-	Delta <- side %*% A %*% side
-
-	Evalues <- eigen(Delta)$values
-	print(Evalues)
-
-	c <- abs(Evalues[length(Evalues)])
-	print(c)
-	c.mat <- matrix(rep(c,ncol(A)*ncol(A)),ncol=ncol(A))
-	c.mat <- c.mat - c*diag(ncol(A))
-
-	Fst.corr <- sqrt(Fst * Fst + 2*c.mat)
-	A <- -0.5 * Fst.corr * Fst.corr
-	Delta <- side %*% A %*% side
-
-	Evalues <- eigen(Delta)$values
-	Evectors <- eigen(Delta)$vectors
-	names <- paste0("PCo",1:ncol(Evectors))
-	colnames(Evectors) <- names
-	rownames(Evectors) <- rownames(Fst)
-
-  Evalues <- Evalues[which(Evalues > 1e-10)]
-  Evectors <- Evectors[,which(Evalues > 1e-10)]
-
-  for(i in 1:ncol(Evectors)){
-    Evectors[,i] <- Evectors[,i]*Evalues[i]
-  }
-
-	return(list(values=Evalues,vectors=Evectors))
-}
+source('functions.R')
 
 rdaSelectionFst <- function(gen.df,name){
 	dat.new <- df2genind(gen.df[,-1],ncode=2,pop=gen.df[,1])
@@ -251,4 +203,3 @@ q <- ggarrange(p_Fst, p_freq,
 				nrow=2, hjust=-2, vjust=1.5)
 
 ggsave("neutral.png", q, device='png', width=18, height=10, units='cm')
-

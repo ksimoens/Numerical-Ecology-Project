@@ -1,18 +1,7 @@
 library(adegenet)
 library(hierfstat)
 
-calcFst <- function(gendata){
-	diffstats <- pairwise.WCfst(gendata)
-
-	print(diffstats)
-
-	rownames(diffstats) <- substr(rownames(diffstats),1,3)
-	colnames(diffstats) <- substr(colnames(diffstats),1,3)
-	diffstats[diffstats < 0] <- 0
-	diffstats[is.na(diffstats)] <- 0
-
-	return(diffstats)
-}
+source('functions.R')
 
 dat.tot <- read.genepop("Input/lobster_1278ind_79snps_40pop.gen")
 dat.df.tot <- genind2df(dat.tot)

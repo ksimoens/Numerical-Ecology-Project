@@ -2,73 +2,7 @@ library(vegan)
 library(tidyverse)
 library(ggforce)
 
-countryList <- function(populations){
-  reference <- data.frame(
-                  pop = c("Brd","Cro","Eye","Heb","Iom","Ios","Loo","Lyn","Ork","Pad","Pem","She","Sbs","Sul",
-                          "Jer",
-                          "Idr",
-                          "Hel",
-                          "Ale","Sky","The","Tor",
-                          "Cor","Hoo","Kil","Mul","Ven",
-                          "Laz","Tar","Sar",
-                          "Oos",
-                          "Ber","Flo","Sin","Tro",
-                          "Vig",
-                          "Gul","Kav","Lys"),
-                  country = c(rep("GRB",14),"CHA","FRA","DEU",rep("HEL",4),rep("IRL",5),rep("ITA",3),"NDL",rep("NOR",4),"ESP",rep("SVE",3))
-                )
-  for(i in 1:nrow(reference)){
-    populations[populations == reference$pop[i]] <- reference$country[i]
-  }
-
-  return(populations)
-}
-
-regionList <- function(populations){
-  reference <- data.frame(
-                  pop = c("Brd","Cro","Eye","Heb","Iom","Ios","Loo","Lyn","Ork","Pad","Pem","She","Sbs","Sul",
-                          "Jer",
-                          "Idr",
-                          "Hel",
-                          "Ale","Sky","The","Tor",
-                          "Cor","Hoo","Kil","Mul","Ven",
-                          "Laz","Tar","Sar",
-                          "Oos",
-                          "Ber","Tro",
-                          "Flo","Sin",
-                          "Vig",
-                          "Gul","Kav","Lys"),
-                  region = c(rep("ATL",17),rep("MED",4),rep("ATL",5),rep("MED",3),rep("ATL",3),rep("SKA",2),"ATL",rep("SKA",3))
-                )
-  for(i in 1:nrow(reference)){
-    populations[populations == reference$pop[i]] <- reference$region[i]
-  }
-
-  return(populations)
-}
-
-getColours <- function(pop){
-	col_key <- data.frame(
-			population = c("CHA","DEU","ESP","FRA","GRB","HEL","IRL","ITA","NDL","NOR","SVE","ATL","MED","SKA"),
-			colour = c(rep(c("#C7E020FF","#24868EFF","#440154FF"),3),c("#C7E020FF","#440154FF"),c("#C7E020FF","#24868EFF","#440154FF")),
-			shape = c(rep(15,3),rep(17,3),rep(19,3),18,18,15,17,19))
-
-	col_res <- col_key[col_key$population %in% unique(pop),]$colour
-	sha_res <- col_key[col_key$population %in% unique(pop),]$shape
-	return(list(colour = col_res,shape = sha_res))
-}
-
-makePlotDF <- function(Evectors,names){
-  df.plot <- Evectors[,1:2] %>% as.data.frame()
-  rownames(df.plot) <- names
-  df.plot$country <- rownames(df.plot)
-  df.plot$country <- countryList(df.plot$country)
-  df.plot$region <- rownames(df.plot)
-  df.plot$region <- regionList(df.plot$region)
-
-  print(df.plot)
-  return(df.plot)
-}
+source('functions.R')
 
 plotPCA <- function(df.plot, Evalues, U, scale, fileName, option){
   lambda <- sprintf("%.2f",round(Evalues[1:2] / sum(Evalues) *100, 2))
