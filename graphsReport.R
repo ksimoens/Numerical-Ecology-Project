@@ -4,8 +4,11 @@ library(ggforce)
 library(ggpubr)
 library(ggnewscale)
 
+# load necessary functions
 source('functions.R')
 
+# function to plot PCoA results
+# see PCoA.R
 plotPCoA <- function(df.plot, Evalues, option){
   lambda <- round(Evalues[1:2] / sum(Evalues) *100, 2)  
 
@@ -23,10 +26,11 @@ plotPCoA <- function(df.plot, Evalues, option){
              xlab(paste0("PCo1 (",lambda[1]," %)")) + ylab(paste0("PCo2 (",lambda[2]," %)")) +
              theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank()) +
              geom_hline(yintercept=0,linetype="dashed") + geom_vline(xintercept=0,linetype="dashed")
-
+  # return a ggplot object instead of making png           
   return(p)
 }
 
+# see PCoA.R
 Fst.mat <- read.csv("Output/distancesFst_tot.csv",header=T,row.names=1) %>%
            as.matrix()
 
@@ -36,14 +40,20 @@ Evectors.tot <- result.tot$vectors
 
 df.plot.tot <- makePlotDF(Evectors.tot,rownames(Fst.mat))
 
+# plot for Fst values
 p_Fst <- plotPCoA(df.plot.tot,Evalues.tot,3)
 
+# function to plot PCA results
+# see PCA.R
+# extra parameter: text = position of descriptor labels
+#   allows for manual placement of the labels
 plotPCA <- function(df.plot, Evalues, U, text, scale, option){
   lambda <- sprintf("%.2f",round(Evalues[1:2] / sum(Evalues) *100, 2))
   rad <- scale*sqrt(2/length(Evalues))
   p <- ggplot() + geom_segment(data=U,x=rep(0,nrow(U)),y=rep(0,nrow(U)),xend=U[,1],yend=U[,2], 
               lineend='round', arrow = arrow(length = unit(0.1, "inches"))) + 
          geom_circle(aes(x0=0,y0=0,r=rad)) +
+         # manual placement of the labels
          geom_text(data=text,aes(x=x,y=y,label=names),size=3) +
          geom_point(data=df.plot,aes(x=PC1,y=PC2,col=df.plot[,option],shape=df.plot[,option]),size=1.5) +
              theme_bw() + 
@@ -61,10 +71,12 @@ plotPCA <- function(df.plot, Evalues, U, text, scale, option){
              guides(col=guide_legend(title=colnames(df.plot)[option])) +
              xlim(1.15*min(df.plot$PC1,U$PC1,-rad),1.15*max(df.plot$PC1,U$PC1,rad)) +
              ylim(1.15*min(df.plot$PC2,U$PC2,-rad),1.15*max(df.plot$PC2,U$PC2,rad)) 
-
+  # return ggplot object instead of making png
   return(p)
 }
 
+# function performing PCA
+# see PCA.R
 PCAOutput <- function(allele.freq,thresh){
   PCA <- rda(allele.freq)
   PCA_sum <- summary(PCA)
@@ -73,7 +85,9 @@ PCAOutput <- function(allele.freq,thresh){
 
   SNP_list <- rownames(PCA.good[PCA.good$PC2 > thresh,])
   site.scores <- scores(PCA, scaling=1, display="sites")
+  # manually set axis directions
   site.scores[,1] <- -site.scores[,1]
+  # manually set scale factor
   species.scores <- 0.5*scores(PCA, scaling=1, display="species")
   scale <- 0.5*attributes(species.scores)$const
   species.scores <- as.data.frame(species.scores[rownames(species.scores) %in% SNP_list,])
@@ -86,19 +100,25 @@ PCAOutput <- function(allele.freq,thresh){
 
 }
 
+# see PCA.R
 al.freq.tot <- read.csv("Output/allele_freq_total.csv", header=T,row.names=1)
 PCA.tot <- PCAOutput(al.freq.tot,0.90)
 df.plot.tot <- makePlotDF(PCA.tot$Evectors, rownames(PCA.tot$Evectors))
+# manually placing descriptor labels
 df.text <- data.frame(x= c(0.2, 0.44, 0.51, 0.51, 0.45, -0.16, -0.21, -0.3, -0.28, -0.6) ,
                       y= c(0.35, 0.07, 0.03, -0.02, -0.09, -0.47, -0.37, -0.43, -0.23, -0.08),
                       names = c(15128, 29889, 81462, 15581, 11291, 65576, 6157, 65064, 53314, 58053))
+
+# plot for allele frequencies
 p_freq <- plotPCA(df.plot.tot,PCA.tot$Evalues,PCA.tot$Umatrix,df.text,PCA.tot$Scale,3)
 
+# final plot: two on top of each other
 q <- ggarrange(p_Fst, p_freq, 
           labels = c("A", "B"),
           nrow = 2)
 ggsave("PCoAvsPCA_tot.png",q,device="png",width=15,height=20,units='cm')
 
+# same plot for Atlantic sites
 Fst.mat.atl <- Fst.mat[-c(32:38),-c(32:38)]
 
 result.atl <- PCoA(Fst.mat.atl)
@@ -125,6 +145,7 @@ q <- ggarrange(p_Fst, p_freq,
           nrow = 2)
 ggsave("PCoAvsPCA_atl.png",q,device="png",width=15,height=20,units='cm')
 
+# same plots for neutral and outlier SNPs
 Fst.neut <- read.csv("Output/distancesFst_neut.csv",header=T,row.names=1) %>%
            as.matrix()
 
@@ -175,6 +196,9 @@ df.plot.sel.atl <- makePlotDF(Evectors.sel.atl,rownames(Fst.sel.atl))
 
 p_Fst_sel_atl <- plotPCoA(df.plot.sel.atl,Evalues.sel.atl,3)
 
+# no manual text parameter
+# see PCA.R
+# rough plots for the allele frequencies
 plotPCA <- function(df.plot, Evalues, U, scale, option){
   lambda <- sprintf("%.2f",round(Evalues[1:2] / sum(Evalues) *100, 2))
   rad <- scale*sqrt(2/length(Evalues))
@@ -222,12 +246,17 @@ PCA.neut.atl <- PCAOutput(al.freq.neut.atl,0.70)
 df.plot.neut.atl <- makePlotDF(PCA.neut.atl$Evectors, rownames(PCA.neut.atl$Evectors))
 p_freq_neut_atl <- plotPCA(df.plot.neut.atl,PCA.neut.atl$Evalues,PCA.neut.atl$Umatrix,PCA.neut.atl$Scale,3)
 
+# combining all plots for in Appendix
 q <- ggarrange(p_Fst_sel, p_freq_sel, p_Fst_sel_atl, p_freq_sel_atl, p_Fst_neut, p_freq_neut, p_Fst_neut_atl, p_freq_neut_atl,
         labels=c("A","B","C","D","E","F","G","H"),
         ncol=2,nrow=4)
 
 ggsave("append_PCoAvsPCA.png",q,device='png',width=30,height=40,units='cm')
 
+# plot the RDA
+# see RDA_Fst_sel.R
+# extra parameter: text = position of descriptor labels
+#   allows for manual placement of the labels
 plotRDA <- function(df.plot, Evalues, VAR, scale, text, option, scaling){
   lambda <- sprintf("%.2f",round(Evalues[1:2] / sum(Evalues) *100, 2))
   rad <- scale*sqrt(2/length(Evalues))
@@ -257,6 +286,7 @@ plotRDA <- function(df.plot, Evalues, VAR, scale, text, option, scaling){
   return(p)
 }
 
+# RDA analysis; see RDA_Fst_sel.R
 Fst.atl <- read.csv("Output/PCo/PCo.sel.atl.csv",header=T,row.names=1)
 
 env <- read.csv("Output/EnvMatrix.csv",header=T,row.names=1)
@@ -292,11 +322,12 @@ scale.fac <- 0.4*attributes(variables)$const
 variables <- as.data.frame(variables)
 variables$variable <- c("environment","environment","environment","linear","linear","MEM","MEM","MEM")
 
+# extra text parameter, manually place descriptors
 df.text <- data.frame(x=c(0.15, 0.29, 0.16, -0.35, -0.22, -0.32, -0.30, -0.15),
                       y=c(0.015, 0.005, -0.022, -0.01, -0.012, -0.002, 0.01, 0.022),
                       names=c("MEM5", "SST range", "PCo2", "PCo1", "SST mean", "MEM1", "SAL mean", "MEM3"))
 
-#adjust xlim in plotRDA before plotting
+#adjust xlim in plotRDA before plotting (recycling the function)
 
 df.plot.s1 <- makePlotDF(site.constraints, rownames(site.constraints))
 p_s1 <- plotRDA(df.plot.s1,Evalues,variables,scale.fac,df.text,3,1)
@@ -318,11 +349,13 @@ df.text <- data.frame(x=c(0.3, 0.82, 0.4, -0.97, -0.8, -0.92, -0.9, -0.35),
 df.plot.s2 <- makePlotDF(site.constraints.s2, rownames(site.constraints.s2))
 p_s2 <- plotRDA(df.plot.s2,Evalues,variables.s2,scale.fac.s2,df.text,3,0)
 
+# combine the plots
 q <- ggarrange(p_s1, p_s2, 
           labels = c("A", "B"),
           nrow = 2)
 ggsave("RDA_Fst_sel.png",q,device="png",width=15,height=20,units='cm')
 
+# the same RDA for the Atlantic sites only
 Fst.atl <- read.csv("Output/PCo/PCo.neut.atl.csv",header=T,row.names=1)
 Fst.atl <- Fst.atl[match(rownames(AEM),rownames(Fst.atl)),]
 
@@ -347,7 +380,6 @@ df.text <- data.frame(x=c(0.005, 0.008, 0.005, 0.016, 0.0125, 0.0125, 0.0045, 0.
 
 df.plot.s1 <- makePlotDF(site.constraints, rownames(site.constraints))
 p_s1 <- plotRDA(df.plot.s1,Evalues,variables,scale.fac,df.text,3,1)
-ggsave("test.png", p_s1, device='png', height=10, width=15, units='cm')
 
 site.constraints.s2 <- scores(rda.final, scaling=2, display=c("lc"))
 site.constraints.s2[,2] <- -site.constraints.s2[,2]
@@ -369,7 +401,9 @@ q <- ggarrange(p_s1, p_s2,
           nrow = 2)
 ggsave("RDA_Fst_neut.png",q,device="png",width=15,height=20,units='cm')
 
-
+# no text parameter
+# see RDA_Fst_sel.R
+# rough plots for the RDA with allele frequencies
 plotRDA <- function(df.plot, Evalues, U, VAR, scale, option, scaling){
   lambda <- sprintf("%.2f",round(Evalues[1:2] / sum(Evalues) *100, 2))
   rad <- scale*sqrt(2/length(Evalues))
@@ -480,6 +514,7 @@ variables.s2[,1] <- -variables.s2[,1]
 df.plot.s2 <- makePlotDF(site.constraints.s2, rownames(site.constraints.s2))
 p_neut_s2 <- plotRDA(df.plot.s2,Evalues,species.scores.s2,variables.s2,scale.fac.s2,3,0)
 
+# combine the plots
 q <- ggarrange(p_sel_s1, p_sel_s2, p_neut_s1, p_neut_s2, 
           labels = c("A", "B", "C", "D"),
           nrow = 2, ncol=2)

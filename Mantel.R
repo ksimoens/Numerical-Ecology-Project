@@ -1,23 +1,28 @@
 library(ade4)
 library(tidyverse)
 
+# load the Fst matrix
 Fst.dist <- read.csv("Output/distancesFst_neut.csv",header=T, row.names=1)
 
+# load the in-water distances
 inwater.dist <- read.csv("Output/distances.csv",header=T, row.names=1)
+# ensure same order of rows
 Fst.dist <- Fst.dist[match(rownames(inwater.dist),rownames(Fst.dist)),]
 Fst.dist <- Fst.dist[,match(names(inwater.dist),names(Fst.dist))]
 print(Fst.dist)
 
+# long format of the matrices
 df.plot <- expand.grid(as.matrix(Fst.dist))
 
 inwater.dist <- as.matrix(as.dist(t(inwater.dist),upper=T, diag=T))
 inwater.vec <- expand.grid(inwater.dist)$Var1
 df.plot$inwater <- inwater.vec
 
-
+# set the site names
 df.plot$SITE1 <- rep(colnames(Fst.dist), each = ncol(Fst.dist))
 df.plot$SITE2 <- rep(colnames(Fst.dist), ncol(Fst.dist))
 
+# remove the distance between the site and itself (diagonal elements)
 index <- vector()
 for(i in 0:37){
 	for(j in 1:(i+1)){
@@ -28,6 +33,7 @@ for(i in 0:37){
 df.plot <- df.plot[-index,]
 rownames(df.plot) <- 1:nrow(df.plot)
 
+# set region of the sites
 df.plot$REGION1 <- rep("",nrow(df.plot))
 df.plot[df.plot$SITE1 %in% c("Laz","Tar","Sar","Ale","The","Tor","Sky"),]$REGION1 <- "MED"
 df.plot[!(df.plot$SITE1 %in% c("Laz","Tar","Sar","Ale","The","Tor","Sky")),]$REGION1 <- "ATL"
@@ -37,19 +43,23 @@ df.plot[df.plot$SITE2 %in% c("Laz","Tar","Sar","Ale","The","Tor","Sky"),]$REGION
 df.plot[!(df.plot$SITE2 %in% c("Laz","Tar","Sar","Ale","The","Tor","Sky")),]$REGION2 <- "ATL"
 df.plot[df.plot$SITE2 %in% c("Oos"),]$REGION2 <- "OOS"
 
+# set pairs of regions
 df.plot$PAIR <- paste(df.plot$REGION1, df.plot$REGION2, sep = "-")
-
+# remove doubles
 df.plot[df.plot$PAIR == "MED-ATL",]$PAIR <- "ATL-MED"
 df.plot[df.plot$PAIR == "OOS-ATL",]$PAIR <- "ATL-OOS"
 
 names(df.plot)[1] <- "Fst"
 
+# make regression line
+# manually add coefficients to the graph
 print(summary(lm(data=df.plot, Fst~inwater )))
 
 Fst.mantel <- as.dist(Fst.dist)
 inwater.mantel <- as.dist(inwater.dist)
 print(ade4::mantel.rtest(Fst.mantel, inwater.mantel, nrepet=9999))
 
+# regression for all sites
 p <- ggplot(data=df.plot,aes(x=inwater,y=Fst,col=PAIR)) + geom_point(size=1.5) +
 	theme_bw() + scale_color_viridis_d(option='magma') +
 	xlab("in-water distance (km)") + ylab(expression(F[st])) + 
@@ -74,6 +84,7 @@ print(ade4::mantel.rtest(Fst.mantel.atl,inwater.mantel.atl,nrepet=9999))
 
 print(summary(lm(data=df.plot.atl, Fst~inwater)))
 
+# regression for Atlantic sites
 p <- ggplot(data=df.plot.atl,aes(x=inwater,y=Fst,col=PAIR)) + geom_point(size=1.5) +
 	theme_bw() + scale_color_viridis_d(option='magma') + xlim(0,3000) +
 	xlab("in-water distance (km)") + ylab(expression(F[st])) + 
@@ -86,6 +97,7 @@ df.plot.oos <- df.plot.atl[df.plot.atl$SITE1 != "Oos",]
 df.plot.oos <- df.plot.oos[df.plot.oos$SITE2 != "Oos",]
 rownames(df.plot.oos) <- 1:nrow(df.plot.oos)
 
+# set country of the sites (not used)
 df.plot.oos$COUNTRY1 <- ""
 df.plot.oos$COUNTRY2 <- ""
 
@@ -113,6 +125,7 @@ print(ade4::mantel.rtest(Fst.mantel.oos,inwater.mantel.oos,nrepet=9999))
 
 print(summary(lm(data=df.plot.oos, Fst~inwater)))
 
+# regression for Atlantic sites (without Oosterschelde)
 p <- ggplot(data=df.plot.oos,aes(x=inwater,y=Fst)) + geom_point(size=1.5) +
 	theme_bw() + 
 	xlab("in-water distance (km)") + ylab(expression(F[st])) +

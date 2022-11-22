@@ -1,5 +1,8 @@
+# PCoA with the in-water distances (see PCoA.R and functions.R for details)
+# load in-water distances
 distances <- read.csv("Output/distances.csv", header=T, row.names=1)
 
+# only for Atlantic sites
 dist_mat <- as.matrix(as.dist(t(distances), upper=T, diag=T))
 dist_mat <- dist_mat[!(row.names(dist_mat) %in% c("Laz","Tar","Sar","Ale","The","Tor","Sky")),]
 dist_mat <- dist_mat[,!(colnames(dist_mat) %in% c("Laz","Tar","Sar","Ale","The","Tor","Sky"))]
@@ -36,4 +39,5 @@ for(i in 1:ncol(Evectors)){
 colnames(Evectors) <- paste0("PCo",1:ncol(Evectors))
 rownames(Evectors) <- rownames(dist_mat)
 
+# output the linear PCo for use in RDA
 write.csv(Evectors,"Output/PCoSpatial.csv")

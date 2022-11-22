@@ -8,44 +8,65 @@ library(gdistance)
 library(geosphere)
 library(maptools)
 
+# load necessary functions
 source('functions.R')
 
+# country lines (scale large for enough detail)
 world <- ne_countries(scale = "large", returnclass = "sf")
 
+# do not use the s2 spherical package
 sf_use_s2(FALSE)
 
+# test of the map: simple country lines
 map <- ggplot(data = world) +
+    # ensure sf object
     geom_sf() +
+    # crop the map
     coord_sf(xlim = c(-15,15), ylim = c(40,65), expand = FALSE) + 
     theme_bw() +
+    # blue water; gridlines
     theme(panel.background = element_rect(fill = "#d0dfff"),
     	  panel.grid.major = element_line(size = 0.5, linetype = 'solid',colour = "grey")) +
     xlab("longitude") + ylab("latitude") +
+    # cartographic scale
     annotation_scale(location = "tl", width_hint = 0.5) + 
+    # north arrow
+    # padding = manually adjust location
     annotation_north_arrow(location="tl", which_north = "true", 
         pad_x = unit(0.3, "cm"), pad_y = unit(1, "cm"),
         style = north_arrow_fancy_orienteering)
 
+# inset map = simple country lines of Europe
 inset <- ggplot() +
 	geom_sf(data=world,fill="grey") +
-    coord_sf(xlim = c(-17,42), ylim = c(33,72), expand = FALSE) + 
+    coord_sf(xlim = c(-17,42), ylim = c(33,72), expand = FALSE) +
+    # extent of the larger map 
     geom_rect(aes(xmin=-15,xmax=15,ymin=40,ymax=65),col='red',fill=rgb(1,0,0,0.25),size=2) +
     theme_void() + 
+    # white water
     theme(panel.background = element_rect(fill = "white") )
 
+# combine map with inset
 map_inset <- ggdraw() +
+  # first draw large map
   draw_plot(map) +
+  # place inset (x and y have to be manually tweaked for png)
+  # width = portion of larger map
+  # xy = relative to larger map
   draw_plot(inset, x = 0.577, y = -0.273,width=0.3)
 
+# load site coordinates
 coord <- read.csv("Input/coordinates.csv",header=T,row.names=1)
 coord <- coord[!(row.names(coord) %in% c("Laz","Tar","Sar","Ale","The","Tor","Sky")),]
 
+# load dbMEM values
 dbMEM <- read.csv("Output/dbMEM.csv",header=T,row.names=1)
 dbMEM <- dbMEM[match(rownames(coord),rownames(dbMEM)),]
 dbMEM.sel <- dbMEM[,c(1,3,4,5,7)]
 
 dbMEM.coord <- cbind(coord,dbMEM.sel)
 
+# MEM maps
 mapMEM1 <- map + geom_point(data=dbMEM.coord,aes(x=lon,y=lat,col=MEM1),size=3) + scale_color_viridis_c(option='magma')
 mapMEM1 <- ggdraw() +
   draw_plot(mapMEM1) +
@@ -88,6 +109,7 @@ mapMEM7 <- ggdraw() +
 
 ggsave("mapMEM7.png",mapMEM7,device="png",width=15,height=15,units='cm')
 
+# load environmental variables
 env <- read.csv("Output/EnvMatrix.csv",header=T,row.names=1)
 env <- env[!(row.names(coord) %in% c("Laz","Tar","Sar","Ale","The","Tor","Sky")),]
 env <- env[match(rownames(coord),rownames(env)),]
@@ -96,6 +118,7 @@ env.sel <- env[,c(1,2,3)]
 
 env.coord <- cbind(coord,env.sel)
 
+# environment maps
 mapSSTMean <- map + geom_point(data=env.coord,aes(x=lon,y=lat,col=SST_mean),size=3) + scale_color_viridis_c(option='magma') +
               guides(col=guide_colourbar(title="SST mean (°C)"))
 mapSSTMean <- ggdraw() +
@@ -120,11 +143,13 @@ mapSALMean <- ggdraw() +
 
 #ggsave("mapSALMean.png",mapSALMean,device="png",width=15,height=15,units='cm')
 
+# load linear coordinates
 lin <- read.csv("Output/PCoSpatial.csv",header=T,row.names=1)[,1:2]
 lin <- lin[match(rownames(coord),rownames(env)),]
 
 lin.coord <- cbind(coord,lin)
 
+# linear maps
 mapLin1 <- map + geom_point(data=lin.coord,aes(x=lon,y=lat,col=PCo1),size=3) + scale_color_viridis_c(option='magma') +
               guides(col=guide_colourbar(title="spatial PCo1"))
 mapLin1 <- ggdraw() +
@@ -141,12 +166,14 @@ mapLin2 <- ggdraw() +
 
 #ggsave("mapLin2.png",mapLin2,device="png",width=15,height=15,units='cm')
 
+# load the AEMs
 AEM <- read.csv("Output/AEM.csv",header=T,row.names=1)
 AEM <- AEM[match(rownames(coord),rownames(AEM)),]
 AEM.sel <- AEM[,c(1,10,12,15,17,18,19,22,27)]
 
 AEM.coord <- cbind(coord,AEM)
 
+# AEM maps
 mapAEM1 <- map + geom_point(data=AEM.coord,aes(x=lon,y=lat,col=AEM1),size=3) + scale_color_viridis_c(option='magma')
 mapAEM1 <- ggdraw() +
   draw_plot(mapAEM1) +
@@ -212,8 +239,11 @@ mapAEM27 <- ggdraw() +
 
 coord <- read.csv("Input/coordinates.csv",header=T,row.names=1)
 
+# countryList() from functions.R
 coord$country <- countryList(rownames(coord))
 
+# do the in-water distances exercise for one plot
+# see distances.R.
 data(wrld_simpl)
 shp <- wrld_simpl
 shp <- crop(shp, extent(-15.788,31.0281,33.227,71.0976))
@@ -236,11 +266,13 @@ coord[28,1] <- 11.59
 coord[28,2] <- 42.16
 trans <- transition(r, mean, directions=16)
 trans <- geoCorrection(trans,'c')
+# Trondheim to Skyros path
 Tro <- as.numeric(coord[rownames(coord)=="Tro",1:2])
 Sky <- as.numeric(coord[rownames(coord)=="Sky",1:2])
 TrotoSky <- shortestPath(trans, Tro, Sky, output="SpatialLines")
 TrotoSky <- SpatialLinesDataFrame(TrotoSky, data = data.frame(ID = 1))
 
+# make the map with the SpatialLine
 lines <- ggplot() +
 	geom_sf(data=world) +
     coord_sf(xlim = c(-17,42), ylim = c(33,72), expand = FALSE) + 
@@ -253,6 +285,7 @@ lines <- ggplot() +
         pad_x = unit(0.5, "cm"), pad_y = unit(1, "cm"),
         style = north_arrow_fancy_orienteering) +
     geom_point(data=coord,aes(x=lon,y=lat,col=country,shape=country),size=3) + 
+    # colour sites according to country
     scale_colour_manual(
               name = "country",
               labels = sort(unique(coord$country)),
@@ -261,6 +294,7 @@ lines <- ggplot() +
               name = "country",
               labels =sort(unique(coord$country)),
               values=getColours(coord$country)$shape) + 
+    # add the line
     geom_path(data=TrotoSky,aes(x=long,y=lat),size=1.5)
 
 ggsave("mapLine.png",lines,device='png',width=15,height=15,units='cm')

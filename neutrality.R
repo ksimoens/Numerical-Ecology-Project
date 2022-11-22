@@ -4,18 +4,24 @@ library(hierfstat)
 library(tidyverse)
 library(adespatial)
 
+# load the necessary functions
 source('functions.R')
 
+# given a data.frame of genetic data
+# output a list of RDA output
 rdaSelectionFst <- function(gen.df,name){
+	# calculate Fst distances (see distancesFst.R)
 	dat.new <- df2genind(gen.df[,-1],ncode=2,pop=gen.df[,1])
 	print(dat.new)
 	dat.hierf <- genind2hierfstat(dat.new)
 	dist <- calcFst(dat.hierf)
 
+	# do the PCoA (PCoA.R or functions.R)
 	res <- PCoA(dist)
 	Fst <- res$vectors
 	Fst <- Fst[match(rownames(AEM),rownames(Fst)),]
 
+	# do the RDA (see RDA_Fst_sel.R)
 	rda.env <- rda(Fst, env.atl.norm)
 	R2adj.env <- RsquareAdj(rda.env)
 	sel.env <- forward.sel(Fst, env.atl.norm, adjR2thresh=R2adj.env, alpha=0.05, nperm=9999)
@@ -31,10 +37,12 @@ rdaSelectionFst <- function(gen.df,name){
 	sel.AEM <- forward.sel(Fst, AEM, adjR2thresh=R2adj.AEM, alpha=0.05, nperm=9999)
 	AEM.sel <- AEM[,sel.AEM$order]
 
+	# calculate the total regression: env + rest
 	rda.env.lin.MEM.AEM <- rda(Fst,cbind(env.sel,linear,dbMEM.sel,AEM.sel))
 	R2adj.env.lin.MEM.AEM <- RsquareAdj(rda.env.lin.MEM.AEM)
 	An.env.lin.MEM.AEM <- anova(rda.env.lin.MEM.AEM,permutations = how(nperm=9999))
 
+	# calculate the partial regression: env | rest
 	rda.env_lin.MEM.AEM <- rda(Fst,env.sel,cbind(linear,dbMEM.sel,AEM.sel))
 	R2adj.env_lin.MEM.AEM <- RsquareAdj(rda.env_lin.MEM.AEM)
 	An.env_lin.MEM.AEM <- anova(rda.env_lin.MEM.AEM,permutations = how(nperm=9999))
@@ -47,6 +55,7 @@ rdaSelectionFst <- function(gen.df,name){
 	return(out)
 }
 
+# load the original genpop file (see distancesFst.R)
 dat.neut <- read.genepop("Input/lobster_1278ind_71snps_40pop.gen")
 dat.df.neut <- genind2df(dat.neut)
 
@@ -69,6 +78,7 @@ dat.df.neut$pop <- droplevels(dat.df.neut$pop)
 dat.df.neut <- dat.df.neut[!(dat.df.neut$pop %in% c("Laz7","Tar7","Sar17_15","Ale89","The44","Tor74","Sky49")), ]
 dat.df.neut$pop <- droplevels(dat.df.neut$pop)
 
+# load explanatory variables
 env <- read.csv("Output/EnvMatrix.csv",header=T,row.names=1)
 env.atl <- env[!(row.names(env) %in% c("Laz","Tar","Sar","Ale","The","Tor","Sky")),]
 env.atl <- env.atl[,-c(6,7)]
@@ -85,55 +95,30 @@ dbMEM <- dbMEM[match(rownames(AEM),rownames(dbMEM)),]
 
 env.atl.norm <- scale(env.atl, center=T, scale=T)
 
+# initialise output = RDA with all the loci
 output <- rdaSelectionFst(dat.df.neut,"total")
 
-for(i in 15:ncol(dat.df.neut)){
+# remove the loci one by one and redo the RDA
+# !!!!!!!!!!!!!!!!!!!!!! this loop takes a lot of time
+# !!!!!!!!!!!!!!!!!!!!!! it is possible that no variables 
+#		are selected in a certain variable group.
+# 		This will cause the loop to break.
+#		Manually continue the loop.
+for(i in 1:ncol(dat.df.neut)){
 	dat.sel <- dat.df.neut[,-i]
 	output <- rbind(output, rdaSelectionFst(dat.sel,names(dat.df.neut)[i]))
 }
 
-dat.sel <- dat.df.neut[,!(names(dat.df.neut) %in% c("39107"))]
-dat.new <- df2genind(dat.sel[,-1],ncode=2,pop=gen.df[,1])
-print(dat.new)
-dat.hierf <- genind2hierfstat(dat.new)
-
-dist <- calcFst(dat.hierf)
-
-Fst <- PCoA(dist)$vectors
-Fst <- Fst[match(rownames(AEM),rownames(Fst)),]
-
-rda.env <- rda(Fst, env.atl.norm)
-R2adj.env <- RsquareAdj(rda.env)
-print(anova(rda.env,permutations = how(nperm=9999)))
-sel.env <- forward.sel(Fst, env.atl.norm, adjR2thresh=R2adj.env, alpha=0.05, nperm=9999)
-env.sel <- env.atl.norm[,sel.env$order]
-
-rda.linear <- rda(Fst,linear)
-R2adj.linear <- RsquareAdj(rda.linear)
-print(anova(rda.linear,permutations = how(nperm=9999)))
-
-rda.dbMEM <- rda(Fst, dbMEM)
-R2adj.dbMEM <- RsquareAdj(rda.dbMEM)
-print(anova(rda.dbMEM,permutations = how(nperm=9999)))
-sel.dbMEM <- forward.sel(Fst, dbMEM, adjR2thresh=R2adj.env, alpha=0.05, nperm=9999)
-dbMEM.sel <- dbMEM[,sel.dbMEM$order]
-
-rda.AEM <- rda(Fst, AEM)
-R2adj.AEM <- RsquareAdj(rda.AEM)
-print(anova(rda.AEM,permutations = how(nperm=9999)))
-sel.AEM <- forward.sel(Fst, AEM, adjR2thresh=R2adj.AEM, alpha=0.05, nperm=9999)
-AEM.sel <- AEM[,sel.AEM$order]
-
-rda.env_all <- rda(Fst, env.sel, cbind(linear,dbMEM.sel,AEM.sel))
-print(anova(rda.env_all,permutations = how(nperm=9999)))
+#output %>% write.csv("Output/neutral_Fst.csv")
 
 #####################################################################################################
+# load allele frequencies
 freq.in <- read.csv("Output/allele_freq_neut.csv",header=T,row.names=1)
 freq.atl <- freq[!(row.names(freq) %in% c("Laz","Tar","Sar","Ale","The","Tor","Sky")),]
 freq.atl <- freq.atl[match(rownames(AEM),rownames(freq.atl)),]
 
-
-
+# given a data.frame of allele frequencies
+# output a list of RDA output
 rdaSelectionFreq <- function(gen.df,name){
 	freq <- gen.df
 
@@ -171,18 +156,23 @@ rdaSelectionFreq <- function(gen.df,name){
 env.atl <- env.atl[,-c(6,7)]
 env.atl.norm <- scale(env.atl, center=T, scale=T)
 
+# initialise output = RDA with all the loci
 output <- rdaSelectionFreq(freq.atl,"total")
 
+# remove loci (= column) one by one and redo RDA
 for(i in 1:ncol(freq.atl)){
 	dat.sel <- freq.atl[,-i]
 	output <- rbind(output, rdaSelectionFreq(dat.sel,names(freq.atl)[i]))
 }
+
+output %>% write.csv("Output/neutral_freq.csv")
 
 neutral_freq <- read.csv("Output/neutral_freq.csv", row.names=1, header=T)
 name <- substr(rownames(neutral_freq)[-1],start=2,stop=nchar(rownames(neutral_freq)[-1])-2)
 df.neut.freq <- data.frame(SNP=factor(name,levels=name),
 							p=neutral_freq$p_mar[-1])
 
+# make plots of output in function of removed locus
 p_freq <- ggplot(data=df.neut.freq) + 
 	geom_point(aes(x=SNP,y=p)) + geom_hline(yintercept=neutral_freq[1,]$p_mar,linetype="dashed") + theme_bw() +
 	theme(axis.text.x = element_text(angle = 90, size = 7, hjust = 0, vjust=0.5), panel.grid.major.y = element_blank()) + 

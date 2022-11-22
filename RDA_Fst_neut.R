@@ -5,6 +5,7 @@ library(ggforce)
 library(ggnewscale)
 library(rdacca.hp)
 
+# see RDA_freq_sel.R
 source('functions.R')
 
 Fst.atl <- read.csv("Output/PCo/PCo.neut.atl.csv",header=T,row.names=1)
@@ -23,6 +24,8 @@ AEM <- read.csv("Output/AEM.csv",header=T,row.names=1)
 Fst.atl <- Fst.atl[match(rownames(AEM),rownames(Fst.atl)),]
 linear <- linear[match(rownames(AEM),rownames(linear)),]
 dbMEM <- dbMEM[match(rownames(AEM),rownames(dbMEM)),]
+
+# environment is not used
 
 rda.linear <- rda(Fst.atl,linear)
 R2adj.linear <- RsquareAdj(rda.linear)
@@ -107,11 +110,14 @@ rda.final <- rda(Fst.atl, cbind(linear,dbMEM.sel,AEM.sel))
 rda.sum <- summary(rda.final)
 Evalues <- as.vector(rda.sum$cont$importance[2,])
 site.constraints <- scores(rda.final, scaling=1, display=c("lc"))
+# manually reverse PC2
 site.constraints[,2] <- -site.constraints[,2]
 variables <- 0.05*scores(rda.final, scaling=1, display=c("bp"))
+# manually reverse PC2
 variables[,2] <- -variables[,2]
 scale.fac <- 0.05*attributes(variables)$const
 variables <- as.data.frame(variables)
+# manually name the only MEM
 rownames(variables)[3] <- "MEM4"
 variables$variable <- c("linear","linear","MEM",rep("AEM",9))
 
@@ -119,17 +125,21 @@ df.plot.s1 <- makePlotDF(site.constraints, rownames(site.constraints))
 plotRDA(df.plot.s1,Evalues,variables,scale.fac,"RDA_Fst_neut_s1_country.png",3,1)
 
 site.constraints.s2 <- scores(rda.final, scaling=2, display=c("lc"))
+# manually reverse PC2
 site.constraints.s2[,2] <- -site.constraints.s2[,2]
 variables.s2 <- 0.05*scores(rda.final, scaling=2, display=c("bp"))
+# manually reverse PC2
 variables.s2[,2] <- -variables.s2[,2]
 scale.fac.s2 <- 0.05*attributes(variables.s2)$const
 variables.s2 <- as.data.frame(variables.s2)
+# manually name the only MEM
 rownames(variables.s2)[3] <- "MEM4"
 variables.s2$variable <- c("linear","linear","MEM",rep("AEM",9))
 
 df.plot.s2 <- makePlotDF(site.constraints.s2, rownames(site.constraints.s2))
 plotRDA(df.plot.s2,Evalues,variables.s2,scale.fac.s2,"RDA_Fst_neut_s2_country.png",3,0)
 
+# axes 10 and 11 are the first unconstrained axes
 site.unconstrained <- as.data.frame(scores(rda.final, scaling=1, choices=c(10,11), display=c("sites")))
 site.unconstrained$country <- countryList(rownames(site.unconstrained))
 Evalues <- as.vector(rda.sum$cont$importance[2,10:11])
@@ -152,11 +162,13 @@ p <- ggplot() + geom_point(data=site.unconstrained,aes(x=PC1,y=PC2,col=country,s
 p %>% ggsave("resid_PCA_Fst_neut.png",.,device='png',width=15,height=10,units='cm')
 
 df.dbMEM <- as.data.frame(dbMEM.sel)
+# manually name the only MEM
 names(df.dbMEM) <- "MEM4"
 rdacca <- rdacca.hp(Fst.atl,list(as.data.frame(linear), df.dbMEM, as.data.frame(AEM.sel)), method='RDA')
 rdacca.sep <- rdacca.hp(Fst.atl,cbind(linear,df.dbMEM,AEM.sel), method='RDA')
 
 permutest <- permu.hp(Fst.atl,list(as.data.frame(linear), df.dbMEM, as.data.frame(AEM.sel)), method='RDA', permutations=9999)
+# !!!!!!!!!!!!!!!!!! permu.hp(individual variables) can take a long time to run
 permutest.sep <- permu.hp(Fst.atl,cbind(linear,df.dbMEM,AEM.sel), method='RDA', permutations=9999)
 
 p <- plot.rdaccahp(rdacca.sep) + theme_bw()

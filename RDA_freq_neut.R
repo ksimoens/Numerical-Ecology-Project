@@ -5,6 +5,7 @@ library(ggforce)
 library(ggnewscale)
 library(rdacca.hp)
 
+# see RDA_freq_sel.R
 source('functions.R')
 
 freq <- read.csv("Output/allele_freq_neut.csv",header=T,row.names=1)
@@ -48,7 +49,7 @@ R2adj.env <- RsquareAdj(rda.env)
 print(anova(rda.env,permutations = how(nperm=9999)))
 sel.env <- forward.sel(freq.atl, env.atl.norm, adjR2thresh=R2adj.env, alpha=0.05, nperm=9999)
 print(sel.env)
-
+# the environmental variables are not used in the RDA with neutral loci
 env.atl.norm.sel <- env.atl.norm[,sel.env$order]
 
 rda.linear <- rda(freq.atl,linear)
@@ -68,7 +69,7 @@ R2adj.AEM <- RsquareAdj(rda.AEM)
 print(anova(rda.AEM,permutations = how(nperm=9999)))
 sel.AEM <- forward.sel(freq.atl, AEM, adjR2thresh=R2adj.AEM, alpha=0.05, nperm=9999)
 print(sel.AEM)
-
+# now AEMs are selected
 AEM.sel <- AEM[,sel.AEM$order]
 
 fractions <- vector()
@@ -166,6 +167,7 @@ variables.s2[,1] <- -variables.s2[,1]
 df.plot.s2 <- makePlotDF(site.constraints.s2, rownames(site.constraints.s2))
 plotRDA(df.plot.s2,Evalues,species.scores.s2,variables.s2,scale.fac.s2,"RDA_freq_neut_s2_country.png",3,0)
 
+# axes 11 and 12 are the first unconstrained axes
 site.unconstrained <- as.data.frame(scores(rda.final, scaling=1, choices=c(11,12), display=c("sites")))
 site.unconstrained$country <- countryList(rownames(site.unconstrained))
 Evalues <- as.vector(rda.sum$cont$importance[2,11:12])
@@ -183,6 +185,7 @@ rdacca <- rdacca.hp(freq.atl,list(as.data.frame(linear), as.data.frame(dbMEM.sel
 rdacca.sep <- rdacca.hp(freq.atl,cbind(linear,dbMEM.sel,AEM.sel), method='RDA')
 
 permutest <- permu.hp(freq.atl,list(as.data.frame(linear), as.data.frame(dbMEM.sel), as.data.frame(AEM.sel)), method='RDA', permutations=9999)
+# !!!!!!!!!!!!!!!!!! permuhp(individual variables) can take a long time to run
 permutest.sep <- permu.hp(freq.atl,cbind(linear,dbMEM.sel,AEM.sel), method='RDA', permutations=9999)
 
 p <- plot.rdaccahp(rdacca.sep) + theme_bw()

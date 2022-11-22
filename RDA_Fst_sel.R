@@ -5,13 +5,18 @@ library(ggforce)
 library(ggnewscale)
 library(rdacca.hp)
 
+# see RDA_freq_sel.R
 source('functions.R')
 
+# load Fst PCo for Atlantic sites for outlier loci
 Fst.atl <- read.csv("Output/PCo/PCo.sel.atl.csv",header=T,row.names=1)
 
+# load Fst distances for outlier loci
 Fst <- read.csv("Output/distancesFst_sel.csv",header=T,row.names=1)
 Fst <- as.dist(Fst,diag=F,upper=F)
+# mean Fst value
 Fst.mean <- mean(Fst)
+# maximum Fst value
 Fst.max <- max(Fst)
 
 env <- read.csv("Output/EnvMatrix.csv",header=T,row.names=1)
@@ -55,6 +60,7 @@ R2adj.AEM <- RsquareAdj(rda.AEM)
 print(anova(rda.AEM,permutations = how(nperm=9999)))
 sel.AEM <- forward.sel(Fst.atl, AEM, adjR2thresh=R2adj.AEM, alpha=0.05, nperm=9999)
 print(sel.AEM)
+# no AEMs are selected (significance full model > 0.05)
 
 fractions <- vector()
 R2adj <- vector()
@@ -119,9 +125,11 @@ rda.final <- rda(Fst.atl, cbind(env.atl.norm.sel,linear,dbMEM.sel))
 rda.sum <- summary(rda.final)
 Evalues <- as.vector(rda.sum$cont$importance[2,])
 site.constraints <- scores(rda.final, scaling=1, display=c("lc"))
+# manually reverse PC1 and PC2
 site.constraints[,1] <- -site.constraints[,1]
 site.constraints[,2] <- -site.constraints[,2]
 variables <- 0.4*scores(rda.final, scaling=1, display=c("bp"))
+# manually reverse PC1 and PC2
 variables[,1] <- -variables[,1]
 variables[,2] <- -variables[,2]
 scale.fac <- 0.4*attributes(variables)$const
@@ -132,9 +140,11 @@ df.plot.s1 <- makePlotDF(site.constraints, rownames(site.constraints))
 plotRDA(df.plot.s1,Evalues,variables,scale.fac,"RDA_Fst_sel_s1_country.png",3,1)
 
 site.constraints.s2 <- scores(rda.final, scaling=2, display=c("lc"))
+# manually reverse PC1 and PC2
 site.constraints.s2[,1] <- -site.constraints.s2[,1]
 site.constraints.s2[,2] <- -site.constraints.s2[,2]
 variables.s2 <- scores(rda.final, scaling=2, display=c("bp"))
+# manually reverse PC1 and PC2
 variables.s2[,1] <- -variables.s2[,1]
 variables.s2[,2] <- -variables.s2[,2]
 scale.fac.s2 <- attributes(variables.s2)$const
@@ -144,6 +154,7 @@ variables.s2$variable <- c("environment","environment","environment","linear","l
 df.plot.s2 <- makePlotDF(site.constraints.s2, rownames(site.constraints.s2))
 plotRDA(df.plot.s2,Evalues,variables.s2,scale.fac.s2,"RDA_Fst_sel_s2_country.png",3,0)
 
+# axes 9 and 10 are the first unconstrained axes
 site.unconstrained <- as.data.frame(scores(rda.final, scaling=1, choices=c(9,10), display=c("sites")))
 site.unconstrained$country <- countryList(rownames(site.unconstrained))
 Evalues <- as.vector(rda.sum$cont$importance[2,9:10])
@@ -169,6 +180,7 @@ rdacca <- rdacca.hp(Fst.atl,list(as.data.frame(env.atl.norm.sel), as.data.frame(
 rdacca.sep <- rdacca.hp(Fst.atl,cbind(env.atl.norm.sel,linear,dbMEM.sel), method='RDA')
 
 permutest <- permu.hp(Fst.atl,list(as.data.frame(env.atl.norm.sel), as.data.frame(linear), as.data.frame(dbMEM.sel)), method='RDA', permutations=9999)
+# !!!!!!!!!!!!!!!!!! permu.hp(individual variables) can take a long time to run
 permutest.sep <- permu.hp(Fst.atl,cbind(env.atl.norm.sel,linear,dbMEM.sel), method='RDA', permutations=9999)
 
 p <- plot.rdaccahp(rdacca.sep) + theme_bw()
